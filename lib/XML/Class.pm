@@ -102,7 +102,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-element] {
 
 
     multi sub serialise(XML::Class $val, Attribute $a) {
-        $val.to-xml(:element);
+        $val.to-xml(:element, attribute => $a);
     }
 
     multi method to-xml() returns Str {
@@ -148,47 +148,17 @@ role XML::Class[Str :$xml-namespace, Str :$xml-element] {
                 }
             }
         }
+        if $a.defined && $a ~~ ElementX {
+            my $t = XML::Element.new(name => $a.xml-name);
+            $t.insert($xe);
+            $xe = $t;
+        }
         $xe;
 
     }
 
-    multi method to-xml(:$element!) returns XML::Element {
-        # Not sure if shortname is the right way to go
-        my $name = $xml-element // self.^shortname;
-        my $xe = XML::Element.new(:$name);
-        if $xml-namespace.defined {
-            $xe.setNamespace($xml-namespace);
-        }
-        for self.^attributes -> $attribute {
-            my $name =  do given $attribute {
-                            when NameX {
-                                $attribute.xml-name;
-                            }
-                            default {
-                                $attribute.name.substr(2);
-                            }
-            }
-
-            my $values = serialise($attribute.get_value(self), $attribute);
-
-            for $values.list -> $value {
-                given $value {
-                    when XML::Element {
-                        $xe.insert($value);
-                    }
-                    when XML::Text {
-                        $xe.insert($name, $value);
-                    }
-                    when Pair {
-                        $xe.set($_.key, $_.value);
-                    }
-                    default {
-                        $xe.set($name, $value);
-                    }
-                }
-            }
-        }
-        $xe;
+    multi method to-xml(:$element!, Attribute :$attribute) returns XML::Element {
+        serialise(self, $attribute, $xml-element, $xml-namespace);
     }
 }
 

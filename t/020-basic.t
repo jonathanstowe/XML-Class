@@ -145,5 +145,44 @@ is $xml.root[0]<thing>, "boom", "and it has the attribute we expected";
 
 diag $xml;
 
+class Zuz does XML::Class {
+    class Vub {
+        has Str $.thing is xml-element;
+    }
+
+    has Vub $.vub is xml-element('Body');
+
+}
+
+$f = Zuz.new(vub => Zuz::Vub.new(thing => "boom"));
+
+lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has Object attribute but with xml-element";
+is $xml.root.nodes.elems, 1, "and have there 1 elements in the root";
+is $xml.root[0].name, 'Body', "and it has the top-level name";
+is $xml.root[0][0].name, "Vub", "and it has the child we expected";
+is $xml.root[0][0][0].name, 'thing', "and that has the child we expected";
+
+diag $xml;
+
+class Zug does XML::Class {
+    class Vub does XML::Class[xml-element => 'Stuff', xml-namespace => 'urn:example'] {
+        has Str $.thing is xml-element;
+    }
+
+    has Vub $.vub is xml-element('Body');
+
+}
+
+$f = Zug.new(vub => Zug::Vub.new(thing => "boom"));
+
+lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has XML::Class attribute but with xml-element";
+is $xml.root.nodes.elems, 1, "and have there 1 elements in the root";
+is $xml.root[0].name, 'Body', "and it has the top-level name";
+is $xml.root[0][0].name, "Stuff", "and it has the child we expected";
+is $xml.root[0][0].nsURI, "urn:example", "and it has the namespace we expected";
+is $xml.root[0][0][0].name, 'thing', "and that has the child we expected";
+
+diag $xml;
+
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6
