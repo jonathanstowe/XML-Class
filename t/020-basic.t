@@ -125,7 +125,25 @@ is $xml.root.nodes.elems, 1, "and have there 1 elements in the root";
 is $xml.root[0].name, 'things', "and it has the top-level name";
 is $xml.root[0].nodes.elems, 4, "and there are child elements";
 
-say $xml;
+diag $xml;
+
+class Zut does XML::Class {
+    class Vub {
+        has Str $.thing;
+    }
+
+    has Vub $.vub;
+
+}
+
+$f = Zut.new(vub => Zut::Vub.new(thing => "boom"));
+
+lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has Object attribute";
+is $xml.root.nodes.elems, 1, "and have there 1 elements in the root";
+is $xml.root[0].name, 'Vub', "and it has the top-level name";
+is $xml.root[0]<thing>, "boom", "and it has the attribute we expected";
+
+diag $xml;
 
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6

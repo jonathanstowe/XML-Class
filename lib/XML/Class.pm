@@ -113,6 +113,45 @@ role XML::Class[Str :$xml-namespace, Str :$xml-element] {
         XML::Document.new($xe);
     }
 
+    multi sub serialise(Mu:D $val, Attribute $a, $xml-element?, $xml-namespace? ) {
+        my $name = $xml-element // $val.^shortname;
+        my $xe = XML::Element.new(:$name);
+        if $xml-namespace.defined {
+            $xe.setNamespace($xml-namespace);
+        }
+        for $val.^attributes -> $attribute {
+            my $name =  do given $attribute {
+                            when NameX {
+                                $attribute.xml-name;
+                            }
+                            default {
+                                $attribute.name.substr(2);
+                            }
+            }
+
+            my $values = serialise($attribute.get_value($val), $attribute);
+
+            for $values.list -> $value {
+                given $value {
+                    when XML::Element {
+                        $xe.insert($value);
+                    }
+                    when XML::Text {
+                        $xe.insert($name, $value);
+                    }
+                    when Pair {
+                        $xe.set($_.key, $_.value);
+                    }
+                    default {
+                        $xe.set($name, $value);
+                    }
+                }
+            }
+        }
+        $xe;
+
+    }
+
     multi method to-xml(:$element!) returns XML::Element {
         # Not sure if shortname is the right way to go
         my $name = $xml-element // self.^shortname;
