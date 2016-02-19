@@ -82,6 +82,24 @@ role XML::Class[Str :$xml-namespace, Str :$xml-element] {
         }
     }
 
+    multi sub serialise(%vals, Attribute $a) {
+        my @els;
+        for %vals.kv -> $key, $value {
+            given $a {
+                when ElementX {
+                    if not @els.elems {
+                        @els = XML::Element.new(name => $a.xml-name);
+                    }
+                    @els[0].insert($key, $value);
+                }
+                default {
+                    @els.push: ( $key => $value);
+                }
+            }
+        }
+        return @els;
+    }
+
 
     multi sub serialise(XML::Class $val, Attribute $a) {
         $val.to-xml(:element);
@@ -121,6 +139,9 @@ role XML::Class[Str :$xml-namespace, Str :$xml-element] {
                     }
                     when XML::Text {
                         $xe.insert($name, $value);
+                    }
+                    when Pair {
+                        $xe.set($_.key, $_.value);
                     }
                     default {
                         $xe.set($name, $value);

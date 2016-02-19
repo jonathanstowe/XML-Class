@@ -105,5 +105,27 @@ for $xml.root[0].nodes -> $el {
 
 diag $xml;
 
+class Hup does XML::Class {
+    has Str %.things;
+}
+
+$f = Hup.new(things => (a => 'A', b => 'B', c => 'C', d => 'D'));
+lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has Associative attribute with plain values";
+is $xml.root.attribs.keys.elems, 4, "and have four attributes in the root";
+
+diag $xml;
+
+class Hut does XML::Class {
+    has Str %.things is xml-element;
+}
+
+$f = Hut.new(things => (a => 'A', b => 'B', c => 'C', d => 'D'));
+lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has Associative attribute with plain values";
+is $xml.root.nodes.elems, 1, "and have there 1 elements in the root";
+is $xml.root[0].name, 'things', "and it has the top-level name";
+is $xml.root[0].nodes.elems, 4, "and there are child elements";
+
+say $xml;
+
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6
