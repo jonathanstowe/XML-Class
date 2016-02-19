@@ -3,14 +3,20 @@ use v6.c;
 use XML;
 
 role XML::Class[Str :$xml-namespace, Str :$xml-element] {
-    my role Name {
+    my role NameX {
         has Str $.xml-name;
+        method xml-name() returns Str {
+            $!xml-name.defined ?? $!xml-name !! $.name.substr(2);
+        }
     }
 
-    my role AttributeX does Name {
+    my role NodeX does NameX {
     }
 
-    my role ElementX does Name {
+    my role AttributeX does NodeX {
+    }
+
+    my role ElementX does NodeX {
 
     }
 
@@ -23,6 +29,23 @@ role XML::Class[Str :$xml-namespace, Str :$xml-element] {
     }
 
     
+    my subset PoA of Attribute where { $_ !~~ NodeX};
+
+    multi sub serialise(Cool $val, ElementX $a) {
+        my $x = XML::Element.new(name => $a.xml-name);
+        $x.insert(XML::Text.new(text => $val));
+        $x;
+    }
+
+
+    multi sub serialise(Cool $val, PoA $a) {
+        $val;
+    }
+
+    multi sub serialise(XML::Class $val, Attribute $a) {
+        $val.to-xml(:element);
+    }
+
     multi method to-xml() returns Str {
         self.to-xml(:document).Str;
     }
@@ -38,13 +61,26 @@ role XML::Class[Str :$xml-namespace, Str :$xml-element] {
             $xe.setNamespace($xml-namespace);
         }
         for self.^attributes -> $attribute {
-            my $name =  $attribute.name.substr(2);
-            given $attribute {
-                when ElementX {
-                    $xe.insert($name, $attribute.get_value(self));
+            my $name =  do given $attribute {
+                            when NameX {
+                                $attribute.xml-name;
+                            }
+                            default {
+                                $attribute.name.substr(2);
+                            }
+            }
+
+            my $value = serialise($attribute.get_value(self), $attribute);
+
+            given $value {
+                when XML::Element {
+                    $xe.insert($value);
+                }
+                when XML::Text {
+                    $xe.insert($name, $value);
                 }
                 default {
-                    $xe.set($name, $attribute.get_value(self));
+                    $xe.set($name, $value);
                 }
             }
         }
