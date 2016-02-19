@@ -22,6 +22,7 @@ is $xml.root.elems, 1, "got one child node";
 isa-ok $xml.root[0], XML::Element, "and it actually is an element";
 is $xml.root[0].name, "zub", "and it's the one we like";
 is $xml.root.nsURI, 'http://example.com/', 'and it has the right xmlns URI';
+is $xml.Str, '<?xml version="1.0"?><foo xmlns="http://example.com/" version="0"><zub>pow</zub></foo>', 'looks fine';
 
 diag $xml;
 
@@ -35,7 +36,7 @@ $f = Foo::Bar.new(zub => "pow");
 lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class no over0rides";
 isa-ok $xml, XML::Document, "and it is an XML::Document";
 is $xml.root.name, 'Bar', "and we appear to have the right root node";
-
+is $xml.Str, '<?xml version="1.0"?><Bar version="0"><zub>pow</zub></Bar>', 'looks good';
 diag $xml;
 
 class Zub does XML::Class {
@@ -51,7 +52,7 @@ for $xml.root.nodes -> $el {
     isa-ok $el, XML::Element, "and elements";
     is $el.name, 'things', "and the right name";
 }
-
+is $xml.Str, '<?xml version="1.0"?><Zub><things>d</things><things>c</things><things>b</things><things>a</things></Zub>', 'looks good';
 diag $xml;
 
 class Bub does XML::Class {
@@ -67,6 +68,7 @@ for $xml.root.nodes -> $el {
     isa-ok $el, XML::Element, "and elements";
     is $el.name, 'thing', "and the right name";
 }
+is $xml.Str, '<?xml version="1.0"?><Bub><thing>d</thing><thing>c</thing><thing>b</thing><thing>a</thing></Bub>', 'looks good';
 diag $xml;
 
 class Rub does XML::Class {
@@ -84,7 +86,7 @@ for $xml.root[0].nodes -> $el {
     isa-ok $el, XML::Element, "and elements";
     is $el.name, 'thing', "and the right name";
 }
-
+is $xml.Str, '<?xml version="1.0"?><Rub><things><thing>d</thing><thing>c</thing><thing>b</thing><thing>a</thing></things></Rub>', 'looks good';
 diag $xml;
 
 class Dub does XML::Class {
@@ -102,7 +104,7 @@ for $xml.root[0].nodes -> $el {
     isa-ok $el, XML::Element, "and elements";
     is $el.name, 'thing', "and the right name";
 }
-
+is $xml.Str, '<?xml version="1.0"?><Dub><burble><thing>d</thing><thing>c</thing><thing>b</thing><thing>a</thing></burble></Dub>','looks good';
 diag $xml;
 
 class Hup does XML::Class {
@@ -112,7 +114,7 @@ class Hup does XML::Class {
 $f = Hup.new(things => (a => 'A', b => 'B', c => 'C', d => 'D'));
 lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has Associative attribute with plain values";
 is $xml.root.attribs.keys.elems, 4, "and have four attributes in the root";
-
+is $xml.Str, '<?xml version="1.0"?><Hup a="A" d="D" c="C" b="B"/>', 'looks good';
 diag $xml;
 
 class Hut does XML::Class {
@@ -124,7 +126,7 @@ lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has Associ
 is $xml.root.nodes.elems, 1, "and have there 1 elements in the root";
 is $xml.root[0].name, 'things', "and it has the top-level name";
 is $xml.root[0].nodes.elems, 4, "and there are child elements";
-
+is $xml.Str, '<?xml version="1.0"?><Hut><things><b>B</b><c>C</c><d>D</d><a>A</a></things></Hut>', 'looks good';
 diag $xml;
 
 class Zut does XML::Class {
@@ -142,7 +144,7 @@ lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has Object
 is $xml.root.nodes.elems, 1, "and have there 1 elements in the root";
 is $xml.root[0].name, 'Vub', "and it has the top-level name";
 is $xml.root[0]<thing>, "boom", "and it has the attribute we expected";
-
+is $xml.Str,'<?xml version="1.0"?><Zut><Vub thing="boom"/></Zut>', 'looks good';
 diag $xml;
 
 class Zuz does XML::Class {
@@ -161,7 +163,7 @@ is $xml.root.nodes.elems, 1, "and have there 1 elements in the root";
 is $xml.root[0].name, 'Body', "and it has the top-level name";
 is $xml.root[0][0].name, "Vub", "and it has the child we expected";
 is $xml.root[0][0][0].name, 'thing', "and that has the child we expected";
-
+is $xml.Str, '<?xml version="1.0"?><Zuz><Body><Vub><thing>boom</thing></Vub></Body></Zuz>', 'looks good';
 diag $xml;
 
 class Zug does XML::Class {
@@ -181,7 +183,7 @@ is $xml.root[0].name, 'Body', "and it has the top-level name";
 is $xml.root[0][0].name, "Stuff", "and it has the child we expected";
 is $xml.root[0][0].nsURI, "urn:example", "and it has the namespace we expected";
 is $xml.root[0][0][0].name, 'thing', "and that has the child we expected";
-
+is $xml.Str, '<?xml version="1.0"?><Zug><Body><Stuff xmlns="urn:example"><thing>boom</thing></Stuff></Body></Zug>', 'looks good';
 diag $xml;
 
 done-testing;
