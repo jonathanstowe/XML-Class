@@ -186,5 +186,25 @@ is $xml.root[0][0][0].name, 'thing', "and that has the child we expected";
 is $xml.Str, '<?xml version="1.0"?><Zug><Body><Stuff xmlns="urn:example"><thing>boom</thing></Stuff></Body></Zug>', 'looks good';
 diag $xml;
 
+class Zuf does XML::Class {
+    class Vub {
+        has Str $.thing is xml-element;
+    }
+
+    has Vub @.vub;
+
+}
+
+$f = Zuf.new(vub => (Zuf::Vub.new(thing => "boom"), Zuf::Vub.new(thing => "blah")));
+
+lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class with Object positional (omits inner wrapper without xml-element)";
+is $xml.root.nodes.elems, 2, "and have there 2 elements in the root";
+is $xml.root[0].name, 'Vub', "and it has the top-level name";
+is $xml.root[0][0].name, "thing", "and it has the child we expected";
+#is $xml.root[0][0].nsURI, "urn:example", "and it has the namespace we expected";
+#.is $xml.root[0][0][0].name, 'thing', "and that has the child we expected";
+is $xml.Str, '<?xml version="1.0"?><Zuf><Vub><thing>blah</thing></Vub><Vub><thing>boom</thing></Vub></Zuf>', "looks good";
+diag $xml;
+
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6

@@ -17,7 +17,8 @@ role XML::Class[Str :$xml-namespace, Str :$xml-element] {
     my role AttributeX does NodeX does NameX {
     }
 
-    my role ElementX does NodeX does NameX {
+    my role ElementX[Bool :$from-serialise] does NodeX does NameX {
+        has Bool $.from-serialise = $from-serialise;
 
     }
 
@@ -68,18 +69,18 @@ role XML::Class[Str :$xml-namespace, Str :$xml-element] {
     multi sub serialise(@vals, Attribute $a) {
         my @els;
         for @vals.list -> $value {
-            @els.append: serialise($value, $a ~~ ElementX ?? $a !! $a but ElementX);
+            # we always want elements so set this but some objects we want the user to choose
+            # whether they get the additional container so indicate we added it.
+            @els.append: serialise($value, $a ~~ ElementX ?? $a !! $a but ElementX[:from-serialise]);
         }
         if $a ~~ ContainerX {
             my $el = XML::Element.new(name => $a.container-name);
             for @els -> $item {
                 $el.insert($item);
             }
-            $el;
+            @els = ($el);
         }
-        else {
-            @els;
-        }
+        @els;
     }
 
     multi sub serialise(%vals, Attribute $a) {
@@ -148,7 +149,10 @@ role XML::Class[Str :$xml-namespace, Str :$xml-element] {
                 }
             }
         }
-        if $a.defined && $a ~~ ElementX {
+        # Add a wrapper if asked for
+        # the from-serialise is true when this was set by default
+        # in the Positional serialise.
+        if $a.defined && $a ~~ ElementX && !$a.from-serialise {
             my $t = XML::Element.new(name => $a.xml-name);
             $t.insert($xe);
             $xe = $t;
