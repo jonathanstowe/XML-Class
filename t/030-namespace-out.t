@@ -20,6 +20,20 @@ is $xml.root[0].name, 'nsc:thing', "and so does the child element";
 
 diag $xml;
 
+class NSClass2 does XML::Class[xml-namespace => 'urn:example.com', xml-namespace-prefix => 'nsc'] {
+    has Str $.thing is xml-element is xml-namespace('urn:thing.com', 'th') = "boom";
+}
+
+$obj = NSClass2.new;
+
+lives-ok { $xml = $obj.to-xml(:document) }, "to-xml with xml-namespace-prefix and xml-namespace trait on child";
+ok $xml.root.attribs<xmlns:nsc>:exists, "and the namespace declaration has the prefix";
+is $xml.root.name, 'nsc:NSClass2', 'and the element does have the prefix';
+is $xml.root[0].name, 'th:thing', "and the child element has the specified prefix";
+is $xml.root[0].attribs<xmlns:th>, 'urn:thing.com', "and the namespace declaration";
+
+diag $xml;
+
 
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6

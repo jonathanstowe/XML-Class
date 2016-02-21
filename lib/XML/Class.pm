@@ -43,6 +43,15 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     }
 
+    my role NamespaceX[:$xml-namespace, :$xml-namespace-prefix] does NodeX {
+        has $.xml-namespace        = $xml-namespace;
+        has $.xml-namespace-prefix = $xml-namespace-prefix;
+    }
+
+    multi sub trait_mod:<is> (Attribute $a, :$xml-namespace! (Str $namespace, $namespace-prefix?)) {
+        $a does NamespaceX[xml-namespace => $namespace, xml-namespace-prefix => $namespace-prefix];
+    }
+
     multi sub trait_mod:<is> (Attribute $a, :$xml-container) is export {
         $a does ContainerX;
         if $xml-container.defined && $xml-container ~~ Str {
@@ -106,7 +115,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
                 given $value {
                     when ElementWrapper {
                         if $!xml-namespace-prefix.defined {
-                            $value.xml-namespace-prefix = $!xml-namespace-prefix;
+                            $value.xml-namespace-prefix //= $!xml-namespace-prefix;
                         }
                         self.insert($value);
                     }
@@ -161,7 +170,13 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     my subset PoA of Attribute where { $_ !~~ NodeX};
 
     multi sub serialise(Cool $val, ElementX $a) {
-        my $x = create-element($a.xml-name);
+        my $x = do if $a ~~ NamespaceX {
+            create-element($a.xml-name, $a.xml-namespace, $a.xml-namespace-prefix);
+        }
+        else {
+            create-element($a.xml-name);
+        }
+
         $x.insert(XML::Text.new(text => $val));
         $x;
     }
