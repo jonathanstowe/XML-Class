@@ -3,6 +3,18 @@ use v6.c;
 use XML;
 
 role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-element] {
+
+    # need to close over these to use within blocks that might have their own defined
+    sub xml-element {
+        $xml-element;
+    }
+    sub xml-namespace {
+        $xml-namespace;
+    }
+    sub xml-namespace-prefix {
+        $xml-namespace-prefix;
+    }
+
     my role NameX {
         has Str $.xml-name is rw;
         method xml-name() is rw returns Str {
@@ -49,6 +61,10 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
     }
 
+    sub apply-namespace(Attribute $attribute) {
+
+    }
+
     sub make-name(Attribute $attribute) returns Str {
         my $name =  do given $attribute {
             when NameX {
@@ -59,6 +75,41 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             }
         }
         $name;
+    }
+
+    my role ElementWrapper {
+        method add-value(Str $name, $values ) {
+            for $values.list -> $value {
+                given $value {
+                    when XML::Element {
+                        self.insert($value);
+                    }
+                    when XML::Text {
+                        self.insert($name, $value);
+                    }
+                    when Pair {
+                        self.set($_.key, $_.value);
+                    }
+                    default {
+                        self.set($name, $value);
+                    }
+                }
+            }
+        }
+    }
+
+    multi sub create-element(Str:D $name, Any:U $?, Any:U $? ) returns XML::Element {
+        my $x = XML::Element.new(:$name);
+        $x does ElementWrapper;
+        $x;
+    }
+
+    multi sub create-element(Str:D $name, Str $xml-namespace, $xml-namespace-prefix?) {
+        my $xe = samewith($name);
+        if $xml-namespace.defined {
+            $xe.setNamespace($xml-namespace, $xml-namespace-prefix);
+        }
+        $xe;
     }
 
     
@@ -126,31 +177,13 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         XML::Document.new($xe);
     }
 
-    multi sub serialise(Mu:D $val, Attribute $a, $xml-element?, $xml-namespace? ) {
+    multi sub serialise(Mu:D $val, Attribute $a, $xml-element?, $xml-namespace?, $xml-namespace-prefix? ) {
         my $name = $xml-element // $val.^shortname;
-        my $xe = XML::Element.new(:$name);
-        if $xml-namespace.defined {
-            $xe.setNamespace($xml-namespace);
-        }
+        my $xe = create-element($name, $xml-namespace, $xml-namespace-prefix);
         for $val.^attributes -> $attribute {
             my $name = make-name($attribute);
             my $values = serialise($attribute.get_value($val), $attribute);
-            for $values.list -> $value {
-                given $value {
-                    when XML::Element {
-                        $xe.insert($value);
-                    }
-                    when XML::Text {
-                        $xe.insert($name, $value);
-                    }
-                    when Pair {
-                        $xe.set($_.key, $_.value);
-                    }
-                    default {
-                        $xe.set($name, $value);
-                    }
-                }
-            }
+            $xe.add-value($name, $values);
         }
         # Add a wrapper if asked for
         # the from-serialise is true when this was set by default
@@ -161,11 +194,10 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             $xe = $t;
         }
         $xe;
-
     }
 
     multi method to-xml(:$element!, Attribute :$attribute) returns XML::Element {
-        serialise(self, $attribute, $xml-element, $xml-namespace);
+        serialise(self, $attribute, $xml-element, $xml-namespace, $xml-namespace-prefix);
     }
 }
 
