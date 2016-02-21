@@ -104,6 +104,12 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         method add-value(Str $name, $values ) {
             for $values.list -> $value {
                 given $value {
+                    when ElementWrapper {
+                        if $!xml-namespace-prefix.defined {
+                            $value.xml-namespace-prefix = $!xml-namespace-prefix;
+                        }
+                        self.insert($value);
+                    }
                     when XML::Element {
                         self.insert($value);
                     }
@@ -118,6 +124,22 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
                     }
                 }
             }
+        }
+
+        method setNamespace($uri, $prefix?) {
+            callsame;
+            $!xml-namespace = $uri;
+            if $prefix.defined {
+                $!xml-namespace-prefix = $prefix;
+            }
+        }
+
+        method name() is rw {
+            my $n = callsame;
+            if $!xml-namespace-prefix {
+                $n = $!xml-namespace-prefix ~ ':' ~ $n;
+            }
+            $n;
         }
     }
 
@@ -192,14 +214,6 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $val.to-xml(:element, attribute => $a);
     }
 
-    multi method to-xml() returns Str {
-        self.to-xml(:document).Str;
-    }
-    multi method to-xml(:$document!) returns XML::Document {
-        my $xe = self.to-xml(:element);
-        XML::Document.new($xe);
-    }
-
     multi sub serialise(Mu:D $val, Attribute $a, $xml-element?, $xml-namespace?, $xml-namespace-prefix? ) {
         my $name = $xml-element // $val.^shortname;
         my $xe = create-element($name, $xml-namespace, $xml-namespace-prefix);
@@ -212,10 +226,17 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $xe.add-wrapper($a);
     }
 
+    multi method to-xml() returns Str {
+        self.to-xml(:document).Str;
+    }
+    multi method to-xml(:$document!) returns XML::Document {
+        my $xe = self.to-xml(:element);
+        XML::Document.new($xe);
+    }
+
     multi method to-xml(:$element!, Attribute :$attribute) returns XML::Element {
         serialise(self, $attribute, $xml-element, $xml-namespace, $xml-namespace-prefix);
     }
 }
-
 
 # vim: expandtab shiftwidth=4 ft=perl6
