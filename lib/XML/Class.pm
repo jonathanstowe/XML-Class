@@ -2,7 +2,7 @@ use v6.c;
 
 use XML;
 
-role XML::Class[Str :$xml-namespace, Str :$xml-element] {
+role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-element] {
     my role NameX {
         has Str $.xml-name is rw;
         method xml-name() is rw returns Str {
@@ -47,6 +47,18 @@ role XML::Class[Str :$xml-namespace, Str :$xml-element] {
         if $xml-element.defined  && $xml-element ~~ Str {
             $a.xml-name = $xml-element;
         }
+    }
+
+    sub make-name(Attribute $attribute) returns Str {
+        my $name =  do given $attribute {
+            when NameX {
+                $attribute.xml-name;
+            }
+            default {
+                $attribute.name.substr(2);
+            }
+        }
+        $name;
     }
 
     
@@ -121,17 +133,8 @@ role XML::Class[Str :$xml-namespace, Str :$xml-element] {
             $xe.setNamespace($xml-namespace);
         }
         for $val.^attributes -> $attribute {
-            my $name =  do given $attribute {
-                            when NameX {
-                                $attribute.xml-name;
-                            }
-                            default {
-                                $attribute.name.substr(2);
-                            }
-            }
-
+            my $name = make-name($attribute);
             my $values = serialise($attribute.get_value($val), $attribute);
-
             for $values.list -> $value {
                 given $value {
                     when XML::Element {
