@@ -66,6 +66,22 @@ for $xml.root.nodes -> $el {
 #is $xml.Str, '<?xml version="1.0"?><Zub><things>d</things><things>c</things><things>b</things><things>a</things></Zub>', 'looks good';
 diag $xml;
 
+class Zuv does XML::Class[xml-namespace => 'urn:zub', xml-namespace-prefix => 'z'] {
+        has Str @.things is xml-element('thing') is xml-namespace('urn:thing', 'th');
+}
+
+$obj = Zuv.new(things => <a b c d>);
+
+lives-ok { $xml = $obj.to-xml(:document);  }, "to-xml(:document) -class has positional attribute no over-rides";
+
+is $xml.root.nodes.elems, 4, "should have four child elements";
+for $xml.root.nodes -> $el {
+    isa-ok $el, XML::Element, "and elements";
+    is $el.name, 'th:thing', "and the right name";
+    is $el.attribs<xmlns:th>, 'urn:thing', "and  each one has the namespace";
+}
+#is $xml.Str, '<?xml version="1.0"?><Zub><things>d</things><things>c</things><things>b</things><things>a</things></Zub>', 'looks good';
+diag $xml;
 class Zuz does XML::Class[xml-namespace => 'urn:zub', xml-namespace-prefix => 'z'] {
         has Str @.things is xml-element('thing') is xml-container;
 }
@@ -101,5 +117,47 @@ for $xml.root[0].nodes -> $el {
 }
 #is $xml.Str, '<?xml version="1.0"?><Zub><things>d</things><things>c</things><things>b</things><things>a</things></Zub>', 'looks good';
 diag $xml;
+
+class Foo does XML::Class[xml-namespace => 'urn:foo', xml-namespace-prefix => 'fo'] {
+    class Bar {
+        has Str $.thing is xml-element;
+    }
+    has @.things;
+}
+
+$obj = Foo.new(things => (Foo::Bar.new(thing => 'zub')));
+lives-ok { $xml = $obj.to-xml(:document); }, "to-xml(:document) with namespace and an Any array of object";
+is $xml.root.nodes.elems, 1, "have one child element";
+is $xml.root.nodes[0].name, 'fo:Bar', "and the class got the namespace prefix";
+is $xml.root.nodes[0][0].name, 'fo:thing', "and so did its child element";
+
+diag $xml;
+
+class Baz does XML::Class[xml-namespace => 'urn:baz', xml-namespace-prefix => 'ba'] {
+    has Str $.thing is xml-element;
+}
+
+$obj = Foo.new(things => (Baz.new(thing => 'zub')));
+lives-ok { $xml = $obj.to-xml(:document); }, "to-xml(:document) with namespace and an Any array of object and object of XML::Class";
+is $xml.root.nodes.elems, 1, "have one child element";
+is $xml.root.nodes[0].name, 'ba:Baz', "and the class got the namespace prefix";
+is $xml.root.nodes[0][0].name, 'ba:thing', "and so did its child element";
+
+diag $xml;
+
+class Fob does XML::Class[xml-namespace => 'urn:foo', xml-namespace-prefix => 'fo'] {
+
+    has @.things is xml-container('Body');
+}
+
+$obj = Fob.new(things => (Baz.new(thing => 'zub')));
+lives-ok { $xml = $obj.to-xml(:document); }, "to-xml(:document) with namespace and an Any array of object and object of XML::Class with container";
+is $xml.root.nodes.elems, 1, "have one child element";
+is $xml.root.nodes[0].name, 'fo:Body', "and the container got the namespace prefix from the root";
+is $xml.root.nodes[0][0].name, 'ba:Baz', "The inserted object got its choice of namespace";
+is $xml.root.nodes[0][0][0].name, 'ba:thing', "and so did its child element";
+
+diag $xml;
+
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6
