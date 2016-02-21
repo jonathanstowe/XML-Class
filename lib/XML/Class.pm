@@ -80,6 +80,17 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         has Str $.xml-namespace        is rw;
         has Str $.xml-namespace-prefix is rw;
 
+        method xml-namespace-prefix() is rw {
+            if not $!xml-namespace-prefix.defined {
+                if not $!xml-namespace.defined {
+                    if self.parent.defined {
+                        $!xml-namespace-prefix = self.parent.?xml-namespace-prefix;
+                    }
+                }
+            }
+            $!xml-namespace-prefix;
+        }
+
         method add-object-attribute(Mu:D $val, Attribute $attribute) {
             if $attribute.has_accessor {
                 my $name = self.make-name($attribute);
@@ -91,7 +102,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         method add-wrapper(Attribute $a) returns XML::Element {
             my XML::Element $wrapped = self;
             if $a.defined && $a ~~ ElementX && !$a.from-serialise {
-                my $t = create-element($a.xml-name);
+                my $t = create-element($a);
                 $t.insert(self);
                 $wrapped = $t;
             }
@@ -145,11 +156,32 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
         method name() is rw {
             my $n = callsame;
-            if $!xml-namespace-prefix {
-                $n = $!xml-namespace-prefix ~ ':' ~ $n;
+            if self.xml-namespace-prefix {
+                $n = self.xml-namespace-prefix ~ ':' ~ $n;
             }
             $n;
         }
+    }
+
+    multi sub create-element(Attribute $a, Bool :$container) returns XML::Element {
+        my $name = do if $container {
+            $a.container-name;
+        }
+        else {
+            $a.xml-name;
+        }
+        my $x = do if $a ~~ NamespaceX {
+            if $a ~~ ContainerX && !$container {
+                create-element($name);
+            }
+            else {
+                create-element($name, $a.xml-namespace, $a.xml-namespace-prefix);
+            }
+        }
+        else {
+            create-element($name);
+        }
+        $x;
     }
 
     multi sub create-element(Str:D $name, Any:U $?, Any:U $? ) returns XML::Element {
@@ -170,13 +202,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     my subset PoA of Attribute where { $_ !~~ NodeX};
 
     multi sub serialise(Cool $val, ElementX $a) {
-        my $x = do if $a ~~ NamespaceX {
-            create-element($a.xml-name, $a.xml-namespace, $a.xml-namespace-prefix);
-        }
-        else {
-            create-element($a.xml-name);
-        }
-
+        my $x = create-element($a);
         $x.insert(XML::Text.new(text => $val));
         $x;
     }
@@ -197,7 +223,8 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             @els.append: serialise($value, $a ~~ ElementX ?? $a !! $a but ElementX[:from-serialise]);
         }
         if $a ~~ ContainerX {
-            my $el = create-element($a.container-name);
+            my $el = create-element($a, :container);
+
             for @els -> $item {
                 $el.insert($item);
             }
@@ -212,7 +239,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             given $a {
                 when ElementX {
                     if not @els.elems {
-                        @els = create-element($a.xml-name);
+                        @els = create-element($a);
                     }
                     @els[0].insert($key, $value);
                 }
