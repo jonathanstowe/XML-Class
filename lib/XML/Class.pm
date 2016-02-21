@@ -65,19 +65,42 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     }
 
-    sub make-name(Attribute $attribute) returns Str {
-        my $name =  do given $attribute {
-            when NameX {
-                $attribute.xml-name;
-            }
-            default {
-                $attribute.name.substr(2);
-            }
-        }
-        $name;
-    }
 
     my role ElementWrapper {
+
+        has Str $.xml-namespace        is rw;
+        has Str $.xml-namespace-prefix is rw;
+
+        method add-object-attribute(Mu:D $val, Attribute $attribute) {
+            if $attribute.has_accessor {
+                my $name = self.make-name($attribute);
+                my $values = serialise($attribute.get_value($val), $attribute);
+                self.add-value($name, $values);
+            }
+        }
+
+        method add-wrapper(Attribute $a) returns XML::Element {
+            my XML::Element $wrapped = self;
+            if $a.defined && $a ~~ ElementX && !$a.from-serialise {
+                my $t = create-element($a.xml-name);
+                $t.insert(self);
+                $wrapped = $t;
+            }
+            $wrapped;
+        }
+
+        method make-name(Attribute $attribute) returns Str {
+            my $name =  do given $attribute {
+                when NameX {
+                    $attribute.xml-name;
+                }
+                default {
+                    $attribute.name.substr(2);
+                }
+            }
+            $name;
+        }
+
         method add-value(Str $name, $values ) {
             for $values.list -> $value {
                 given $value {
@@ -116,7 +139,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     my subset PoA of Attribute where { $_ !~~ NodeX};
 
     multi sub serialise(Cool $val, ElementX $a) {
-        my $x = XML::Element.new(name => $a.xml-name);
+        my $x = create-element($a.xml-name);
         $x.insert(XML::Text.new(text => $val));
         $x;
     }
@@ -137,7 +160,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             @els.append: serialise($value, $a ~~ ElementX ?? $a !! $a but ElementX[:from-serialise]);
         }
         if $a ~~ ContainerX {
-            my $el = XML::Element.new(name => $a.container-name);
+            my $el = create-element($a.container-name);
             for @els -> $item {
                 $el.insert($item);
             }
@@ -152,7 +175,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             given $a {
                 when ElementX {
                     if not @els.elems {
-                        @els = XML::Element.new(name => $a.xml-name);
+                        @els = create-element($a.xml-name);
                     }
                     @els[0].insert($key, $value);
                 }
@@ -181,19 +204,12 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         my $name = $xml-element // $val.^shortname;
         my $xe = create-element($name, $xml-namespace, $xml-namespace-prefix);
         for $val.^attributes -> $attribute {
-            my $name = make-name($attribute);
-            my $values = serialise($attribute.get_value($val), $attribute);
-            $xe.add-value($name, $values);
+            $xe.add-object-attribute($val, $attribute);
         }
         # Add a wrapper if asked for
         # the from-serialise is true when this was set by default
         # in the Positional serialise.
-        if $a.defined && $a ~~ ElementX && !$a.from-serialise {
-            my $t = XML::Element.new(name => $a.xml-name);
-            $t.insert($xe);
-            $xe = $t;
-        }
-        $xe;
+        $xe.add-wrapper($a);
     }
 
     multi method to-xml(:$element!, Attribute :$attribute) returns XML::Element {
