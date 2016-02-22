@@ -5,13 +5,13 @@ use XML;
 role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-element] {
 
     # need to close over these to use within blocks that might have their own defined
-    sub xml-element {
+    method xml-element {
         $xml-element;
     }
-    sub xml-namespace {
+    method xml-namespace {
         $xml-namespace;
     }
-    sub xml-namespace-prefix {
+    method xml-namespace-prefix {
         $xml-namespace-prefix;
     }
 
@@ -285,9 +285,47 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         my $xe = self.to-xml(:element);
         XML::Document.new($xe);
     }
-
     multi method to-xml(:$element!, Attribute :$attribute) returns XML::Element {
         serialise(self, $attribute, $xml-element, $xml-namespace, $xml-namespace-prefix);
+    }
+
+    multi method from-xml(XML::Class:U: Str $xml) returns XML::Class {
+        my $doc = XML::Document.new($xml);
+        self.from-xml($doc);
+    }
+
+    multi method from-xml(XML::Class:U: XML::Document:D $xml) returns XML::Class {
+        my $root = $xml.root;
+        self.from-xml($root);
+    }
+
+    multi method from-xml(XML::Class:U: XML::Element:D $xml, Attribute :$attribute) returns XML::Class {
+        if $xml !~~ ElementWrapper {
+            $xml does ElementWrapper;
+        }
+        deserialise($xml, $attribute, self);
+    }
+
+    multi sub deserialise(XML::Element $element, PoA $attribute, Cool $obj) {
+        my $val = $element.attribs{$attribute.name.substr(2)};
+        $obj($val);
+    }
+
+    multi sub deserialise(XML::Element $element, ElementX $attribute, Cool $obj) {
+        my $name = $attribute.xml-name;
+        my $node = $element.elements(TAG => $name, :SINGLE);
+        $obj($node.firstChild.Str);
+    }
+
+    multi sub deserialise(XML::Element $element, Attribute $attribute, Mu $obj) {
+        my %args;
+
+        for $obj.^attributes -> $attr {
+            my $attr-name = $attr.name.substr(2);
+            %args{$attr-name} = deserialise($element, $attr, $attr.type);
+        }
+
+        return $obj.new(|%args);
     }
 }
 
