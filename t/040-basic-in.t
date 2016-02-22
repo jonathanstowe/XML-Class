@@ -27,8 +27,7 @@ diag $xml if $DEBUG;
 
 my $out;
 
-#lives-ok { 
-$out = SimpleClass.from-xml($xml); # }, "from-xml(Str)";
+lives-ok { $out = SimpleClass.from-xml($xml);  }, "from-xml(Str)";
 
 isa-ok $out, SimpleClass, "got back the class we expected";
 
@@ -40,7 +39,24 @@ is-deeply $out.strings.sort, $obj.strings.sort, "and the basic array is good";
 is-deeply $out.ints.sort, $obj.ints.sort, "and a contained array too";
 is-deeply $out.hash, $obj.hash, "and the contained hash";
 
+class Foo does XML::Class {
+    class Bar {
+        has Str $.thing is xml-element;
+    }
 
+    has Bar $.bar;
+}
+
+$obj = Foo.new(bar => Foo::Bar.new(thing => 'boom'));
+$xml = $obj.to-xml;
+
+diag $xml if $DEBUG;
+
+#lives-ok { 
+$out = Foo.from-xml($xml); # }, "from-xml(Str) class with inner class";
+isa-ok $out, Foo, "and the class is correct";
+isa-ok $out.bar, Foo::Bar, "and the attribute is the right class";
+is $out.bar.thing, $obj.bar.thing, "and its right attribute in it";
 
 
 done-testing;

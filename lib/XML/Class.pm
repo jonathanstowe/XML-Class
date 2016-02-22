@@ -351,8 +351,12 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         %vals;
     }
 
-    multi sub deserialise(XML::Element $element, Attribute $attribute, Mu $obj) {
+    multi sub deserialise(XML::Element $element is copy, Attribute $attribute, Mu $obj) {
         my %args;
+
+        if $element.name ne $obj.^shortname {
+            $element = $element.elements(TAG => $obj.^shortname, :SINGLE);
+        }
 
         for $obj.^attributes -> $attr {
             my $attr-name = $attr.name.substr(2);
