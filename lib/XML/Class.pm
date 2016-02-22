@@ -216,7 +216,10 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     # Not sure why this works in some places and not others
     # hence the overly specific param
-    multi sub serialise(Cool $val where * !~~ Positional, PoA $a) {
+
+    my subset NoArray of Cool where * !~~ Positional;
+
+    multi sub serialise(NoArray $val, PoA $a) {
         $val;
     }
 
@@ -306,15 +309,30 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         deserialise($xml, $attribute, self);
     }
 
-    multi sub deserialise(XML::Element $element, PoA $attribute, Cool $obj) {
+    multi sub deserialise(XML::Element $element, PoA $attribute, NoArray $obj) {
         my $val = $element.attribs{$attribute.name.substr(2)};
         $obj($val);
     }
 
-    multi sub deserialise(XML::Element $element, ElementX $attribute, Cool $obj) {
+    multi sub deserialise(XML::Element $element, AttributeX $attribute, NoArray $obj) {
+        my $val = $element.attribs{$attribute.xml-name};
+        $obj($val);
+    }
+
+    multi sub deserialise(XML::Element $element, ElementX $attribute, NoArray $obj) {
         my $name = $attribute.xml-name;
         my $node = $element.elements(TAG => $name, :SINGLE);
         $obj($node.firstChild.Str);
+    }
+
+    multi sub deserialise(XML::Element $element, Attribute $attribute, Cool @obj) {
+        my @vals;
+        my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! $attribute.name.substr(2);
+        my $e = $attribute ~~ ContainerX ?? $element.elements(TAG => $attribute.container-name, :SINGLE) !! $element;
+        for $e.elements(TAG => $name) -> $node {
+            @vals.append:  @obj.of.($node.firstChild.Str);
+        }
+        @vals;
     }
 
     multi sub deserialise(XML::Element $element, Attribute $attribute, Mu $obj) {
@@ -322,7 +340,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
         for $obj.^attributes -> $attr {
             my $attr-name = $attr.name.substr(2);
-            %args{$attr-name} = deserialise($element, $attr, $attr.type);
+            %args{$attr-name} := deserialise($element, $attr, $attr.type);
         }
 
         return $obj.new(|%args);
