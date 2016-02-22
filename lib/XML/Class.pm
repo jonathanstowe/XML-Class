@@ -335,6 +335,22 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         @vals;
     }
 
+    multi sub deserialise(XML::Element $element, Attribute $attribute, Cool %obj) {
+        my %vals;
+
+        if $attribute ~~ ElementX {
+            my $name = $attribute.xml-name;
+            my $c = $element.elements(TAG => $name, :SINGLE);
+            for $c.nodes -> $node {
+                %vals{$node.name} = %obj.of.($node.firstChild.Str);
+            }
+        }
+        else {
+            warn "Unable to deserialise this Hash from XML";
+        }
+        %vals;
+    }
+
     multi sub deserialise(XML::Element $element, Attribute $attribute, Mu $obj) {
         my %args;
 

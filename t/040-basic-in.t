@@ -15,10 +15,11 @@ class SimpleClass does XML::Class {
     has Rat $.named is xml-element('some-element');
     has Str @.strings;
     has Int @.ints is xml-container is xml-element('int');
+    has Str %.hash is xml-element;
 
 }
 
-my $obj = SimpleClass.new(version => 0, thing => 'boom', named => 78/3, something => 'else', strings => <a b c d>, ints => (^5));
+my $obj = SimpleClass.new(version => 0, thing => 'boom', named => 78/3, something => 'else', strings => <a b c d>, ints => (^5), hash => <A B C D>.map( { $_ => $_.lc}).hash);
 
 my $xml =  $obj.to-xml;
 
@@ -37,6 +38,7 @@ is $out.named, $obj.named, "and a Rat with name over-ride";
 is $out.something, $obj.something, "and an attribute attribute with name over-ride";
 is-deeply $out.strings.sort, $obj.strings.sort, "and the basic array is good";
 is-deeply $out.ints.sort, $obj.ints.sort, "and a contained array too";
+is-deeply $out.hash, $obj.hash, "and the contained hash";
 
 
 
