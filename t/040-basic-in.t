@@ -52,12 +52,28 @@ $xml = $obj.to-xml;
 
 diag $xml if $DEBUG;
 
-#lives-ok { 
-$out = Foo.from-xml($xml); # }, "from-xml(Str) class with inner class";
+lives-ok { $out = Foo.from-xml($xml);  }, "from-xml(Str) class with inner class";
 isa-ok $out, Foo, "and the class is correct";
 isa-ok $out.bar, Foo::Bar, "and the attribute is the right class";
 is $out.bar.thing, $obj.bar.thing, "and its right attribute in it";
 
+class Fob does XML::Class {
+    class Bar {
+        has Str $.thing is xml-element;
+    }
+
+    has Bar $.bar is xml-element('Body');
+}
+
+$obj = Fob.new(bar => Fob::Bar.new(thing => 'boom'));
+$xml = $obj.to-xml;
+
+diag $xml if $DEBUG;
+
+lives-ok { $out = Fob.from-xml($xml);  }, "from-xml(Str) class with inner class";
+isa-ok $out, Fob, "and the class is correct";
+isa-ok $out.bar, Fob::Bar, "and the attribute is the right class";
+is $out.bar.thing, $obj.bar.thing, "and its right attribute in it";
 
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6

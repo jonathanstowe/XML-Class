@@ -351,11 +351,30 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         %vals;
     }
 
+    my class X::NoElement is Exception {
+        has Str $.element is required;
+        has Str $.attribute is required;
+        method message() {
+            "Expected element '{ $!element }' not found for attribute '{ $!attribute.name.substr(2) }'";
+        }
+    }
+
     multi sub deserialise(XML::Element $element is copy, Attribute $attribute, Mu $obj) {
         my %args;
 
+        if $attribute ~~ ElementX {
+            my $name = $attribute.xml-name;
+            $element = $element.elements(TAG => $name, :SINGLE);
+            if !$element {
+                X::NoElement.new(element => $name, attribute => $attribute).throw
+            }
+        }
         if $element.name ne $obj.^shortname {
-            $element = $element.elements(TAG => $obj.^shortname, :SINGLE);
+            my $name = $obj.^shortname;
+            $element = $element.elements(TAG => $name, :SINGLE);
+            if !$element {
+                X::NoElement.new(element => $name, attribute => $attribute).throw
+            }
         }
 
         for $obj.^attributes -> $attr {
