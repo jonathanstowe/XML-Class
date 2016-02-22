@@ -59,15 +59,21 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
     }
 
-    multi sub trait_mod:<is> (Attribute $a, :$xml-attribute!) is export {
+    multi sub trait_mod:<is> (Attribute $a, Bool :$xml-attribute!) is export {
         $a does AttributeX;
     }
 
-    multi sub trait_mod:<is> (Attribute $a, :$xml-element!) is export {
+    multi sub trait_mod:<is> (Attribute $a, Str:D :$xml-attribute!) is export {
+        $a does AttributeX;
+        $a.xml-name = $xml-attribute;
+    }
+
+    multi sub trait_mod:<is> (Attribute $a, Bool :$xml-element!) is export {
         $a does ElementX;
-        if $xml-element.defined  && $xml-element ~~ Str {
-            $a.xml-name = $xml-element;
-        }
+    }
+    multi sub trait_mod:<is> (Attribute $a, Str:D :$xml-element!) is export {
+        $a does ElementX;
+        $a.xml-name = $xml-element;
     }
 
     sub apply-namespace(Attribute $attribute) {
@@ -212,6 +218,10 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     # hence the overly specific param
     multi sub serialise(Cool $val where * !~~ Positional, PoA $a) {
         $val;
+    }
+
+    multi sub serialise(Cool $val, AttributeX $a) {
+        ($a.xml-name => $val);
     }
 
     # One big sub because the multis were getting out of control

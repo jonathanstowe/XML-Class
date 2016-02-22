@@ -41,6 +41,24 @@ is $xml.root.name, 'Bar', "and we appear to have the right root node";
 is $xml.Str, '<?xml version="1.0"?><Bar version="0"><zub>pow</zub></Bar>', 'looks good';
 diag $xml if $DEBUG;
 
+class Woo is XML::Class {
+    has Str $.tang is xml-attribute;
+}
+
+$f = Woo.new(tang => 'zow');
+lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class with explicit attribute trait (no name)";
+is $xml.root.attribs<tang>, 'zow', "got the attribute we wanted";
+diag $xml if $DEBUG;
+
+class Wot is XML::Class {
+    has Str $.tang is xml-attribute('thang');
+}
+
+$f = Wot.new(tang => 'zow');
+lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class with explicit attribute trait (no name)";
+is $xml.root.attribs<thang>, 'zow', "got the attribute we wanted";
+diag $xml if $DEBUG;
+
 class Zub does XML::Class {
     has Str @.things;
 }
