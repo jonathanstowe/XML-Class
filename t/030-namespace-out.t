@@ -6,6 +6,8 @@ use Test;
 
 use XML::Class;
 
+my $DEBUG = False;
+
 class NSClass does XML::Class[xml-namespace => 'urn:example.com', xml-namespace-prefix => 'nsc'] {
     has Str $.thing is xml-element = "boom";
 }
@@ -18,7 +20,7 @@ ok $xml.root.attribs<xmlns:nsc>:exists, "and the namespace declaration has the p
 is $xml.root.name, 'nsc:NSClass', 'and the element does have the prefix';
 is $xml.root[0].name, 'nsc:thing', "and so does the child element";
 
-diag $xml;
+diag $xml if $DEBUG;
 
 class NSClass2 does XML::Class[xml-namespace => 'urn:example.com', xml-namespace-prefix => 'nsc'] {
     has Str $.thing is xml-element is xml-namespace('urn:thing.com', 'th') = "boom";
@@ -32,7 +34,7 @@ is $xml.root.name, 'nsc:NSClass2', 'and the element does have the prefix';
 is $xml.root[0].name, 'th:thing', "and the child element has the specified prefix";
 is $xml.root[0].attribs<xmlns:th>, 'urn:thing.com', "and the namespace declaration";
 
-diag $xml;
+diag $xml if $DEBUG;
 
 class Zub does XML::Class[xml-namespace => 'urn:zub', xml-namespace-prefix => 'z'] {
         has Str @.things;
@@ -48,7 +50,7 @@ for $xml.root.nodes -> $el {
     is $el.name, 'z:things', "and the right name";
 }
 #is $xml.Str, '<?xml version="1.0"?><Zub><things>d</things><things>c</things><things>b</things><things>a</things></Zub>', 'looks good';
-diag $xml;
+diag $xml if $DEBUG;
 
 class Zug does XML::Class[xml-namespace => 'urn:zub', xml-namespace-prefix => 'z'] {
         has Str @.things is xml-element('thing');
@@ -64,7 +66,7 @@ for $xml.root.nodes -> $el {
     is $el.name, 'z:thing', "and the right name";
 }
 #is $xml.Str, '<?xml version="1.0"?><Zub><things>d</things><things>c</things><things>b</things><things>a</things></Zub>', 'looks good';
-diag $xml;
+diag $xml if $DEBUG;
 
 class Zuv does XML::Class[xml-namespace => 'urn:zub', xml-namespace-prefix => 'z'] {
         has Str @.things is xml-element('thing') is xml-namespace('urn:thing', 'th');
@@ -81,7 +83,7 @@ for $xml.root.nodes -> $el {
     is $el.attribs<xmlns:th>, 'urn:thing', "and  each one has the namespace";
 }
 #is $xml.Str, '<?xml version="1.0"?><Zub><things>d</things><things>c</things><things>b</things><things>a</things></Zub>', 'looks good';
-diag $xml;
+diag $xml if $DEBUG;
 class Zuz does XML::Class[xml-namespace => 'urn:zub', xml-namespace-prefix => 'z'] {
         has Str @.things is xml-element('thing') is xml-container;
 }
@@ -97,7 +99,7 @@ for $xml.root[0].nodes -> $el {
     is $el.name, 'z:thing', "and the right name";
 }
 #is $xml.Str, '<?xml version="1.0"?><Zub><things>d</things><things>c</things><things>b</things><things>a</things></Zub>', 'looks good';
-diag $xml;
+diag $xml if $DEBUG;
 
 class Zuy does XML::Class[xml-namespace => 'urn:zub', xml-namespace-prefix => 'z'] {
         has Str @.things is xml-element('thing') is xml-container is xml-namespace('urn:thing', 'th');
@@ -116,7 +118,7 @@ for $xml.root[0].nodes -> $el {
     nok $el.attribs<xmlns:th>:exists, "and we didn't copy the ns declaration";
 }
 #is $xml.Str, '<?xml version="1.0"?><Zub><things>d</things><things>c</things><things>b</things><things>a</things></Zub>', 'looks good';
-diag $xml;
+diag $xml if $DEBUG;
 
 class Foo does XML::Class[xml-namespace => 'urn:foo', xml-namespace-prefix => 'fo'] {
     class Bar {
@@ -131,7 +133,7 @@ is $xml.root.nodes.elems, 1, "have one child element";
 is $xml.root.nodes[0].name, 'fo:Bar', "and the class got the namespace prefix";
 is $xml.root.nodes[0][0].name, 'fo:thing', "and so did its child element";
 
-diag $xml;
+diag $xml if $DEBUG;
 
 class Baz does XML::Class[xml-namespace => 'urn:baz', xml-namespace-prefix => 'ba'] {
     has Str $.thing is xml-element;
@@ -143,7 +145,7 @@ is $xml.root.nodes.elems, 1, "have one child element";
 is $xml.root.nodes[0].name, 'ba:Baz', "and the class got the namespace prefix";
 is $xml.root.nodes[0][0].name, 'ba:thing', "and so did its child element";
 
-diag $xml;
+diag $xml if $DEBUG;
 
 class Fob does XML::Class[xml-namespace => 'urn:foo', xml-namespace-prefix => 'fo'] {
 
@@ -157,7 +159,7 @@ is $xml.root.nodes[0].name, 'fo:Body', "and the container got the namespace pref
 is $xml.root.nodes[0][0].name, 'ba:Baz', "The inserted object got its choice of namespace";
 is $xml.root.nodes[0][0][0].name, 'ba:thing', "and so did its child element";
 
-diag $xml;
+diag $xml if $DEBUG;
 
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6
