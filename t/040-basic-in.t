@@ -75,5 +75,23 @@ isa-ok $out, Fob, "and the class is correct";
 isa-ok $out.bar, Fob::Bar, "and the attribute is the right class";
 is $out.bar.thing, $obj.bar.thing, "and its right attribute in it";
 
+class Foz does XML::Class {
+    class Bar {
+        has Str $.thing is xml-element;
+    }
+
+    has Bar @.bar;
+}
+
+$obj = Foz.new(bar => (Foz::Bar.new(thing => 'boom'), Foz::Bar.new(thing => 'poom')));
+$xml = $obj.to-xml;
+
+diag $xml if $DEBUG;
+
+#lives-ok { 
+$out = Foz.from-xml($xml); # }, "from-xml(Str) class with inner class";
+isa-ok $out, Foz, "and the class is correct";
+isa-ok $out.bar[0], Foz::Bar, "and the attribute is the right class";
+is $out.bar[0].thing, $obj.bar[0].thing, "and its right attribute in it";
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6

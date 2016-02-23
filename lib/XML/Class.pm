@@ -134,13 +134,13 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
                         if $!xml-namespace-prefix.defined {
                             $value.xml-namespace-prefix //= $!xml-namespace-prefix;
                         }
-                        self.insert($value);
+                        self.append($value);
                     }
                     when XML::Element {
-                        self.insert($value);
+                        self.append($value);
                     }
                     when XML::Text {
-                        self.insert($name, $value);
+                        self.append($name, $value);
                     }
                     when Pair {
                         self.set($_.key, $_.value);
@@ -239,7 +239,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             my $el = create-element($a, :container);
 
             for @els -> $item {
-                $el.insert($item);
+                $el.append($item);
             }
             @els = ($el);
         }
@@ -317,12 +317,25 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $obj($node.firstChild.Str);
     }
 
+    multi sub deserialise(XML::Text $text, Attribute $attribute, $obj) {
+        $obj($text.Str);
+    }
+
     multi sub deserialise(XML::Element $element, Attribute $attribute, Cool @obj) {
         my @vals;
         my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! $attribute.name.substr(2);
         my $e = $attribute ~~ ContainerX ?? $element.elements(TAG => $attribute.container-name, :SINGLE) !! $element;
         for $e.elements(TAG => $name) -> $node {
-            @vals.append:  @obj.of.($node.firstChild.Str);
+            @vals.append:  deserialise($node.firstChild, $attribute, @obj.of); #.($node.firstChild.Str);
+        }
+        @vals;
+    }
+    multi sub deserialise(XML::Element $element, Attribute $attribute, Mu @obj) {
+        my @vals;
+        my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! @obj.of.^shortname;
+        my $e = $attribute ~~ ContainerX ?? $element.elements(TAG => $attribute.container-name, :SINGLE) !! $element;
+        for $e.elements(TAG => $name) -> $node {
+            @vals.append:  deserialise($node, $attribute, @obj.of); #.($node.firstChild.Str);
         }
         @vals;
     }
