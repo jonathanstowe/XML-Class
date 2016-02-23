@@ -6,7 +6,7 @@ use Test;
 
 use XML::Class;
 
-my Bool $DEBUG = True;
+my Bool $DEBUG;
 
 class A does XML::Class[xml-element => "a"] {
     class B does XML::Class[xml-element => 'b'] {
