@@ -72,7 +72,7 @@ for $xml.root.nodes -> $el {
     isa-ok $el, XML::Element, "and elements";
     is $el.name, 'things', "and the right name";
 }
-is $xml.Str, '<?xml version="1.0"?><Zub><things>d</things><things>c</things><things>b</things><things>a</things></Zub>', 'looks good';
+is $xml.Str, '<?xml version="1.0"?><Zub><things>a</things><things>b</things><things>c</things><things>d</things></Zub>', 'looks good';
 diag $xml if $DEBUG;
 
 class Bub does XML::Class {
@@ -88,7 +88,7 @@ for $xml.root.nodes -> $el {
     isa-ok $el, XML::Element, "and elements";
     is $el.name, 'thing', "and the right name";
 }
-is $xml.Str, '<?xml version="1.0"?><Bub><thing>d</thing><thing>c</thing><thing>b</thing><thing>a</thing></Bub>', 'looks good';
+is $xml.Str, '<?xml version="1.0"?><Bub><thing>a</thing><thing>b</thing><thing>c</thing><thing>d</thing></Bub>', 'looks good';
 diag $xml if $DEBUG;
 
 class Rub does XML::Class {
@@ -106,7 +106,7 @@ for $xml.root[0].nodes -> $el {
     isa-ok $el, XML::Element, "and elements";
     is $el.name, 'thing', "and the right name";
 }
-is $xml.Str, '<?xml version="1.0"?><Rub><things><thing>d</thing><thing>c</thing><thing>b</thing><thing>a</thing></things></Rub>', 'looks good';
+is $xml.Str, '<?xml version="1.0"?><Rub><things><thing>a</thing><thing>b</thing><thing>c</thing><thing>d</thing></things></Rub>', 'looks good';
 diag $xml if $DEBUG;
 
 class Dub does XML::Class {
@@ -124,7 +124,7 @@ for $xml.root[0].nodes -> $el {
     isa-ok $el, XML::Element, "and elements";
     is $el.name, 'thing', "and the right name";
 }
-is $xml.Str, '<?xml version="1.0"?><Dub><burble><thing>d</thing><thing>c</thing><thing>b</thing><thing>a</thing></burble></Dub>','looks good';
+is $xml.Str, '<?xml version="1.0"?><Dub><burble><thing>a</thing><thing>b</thing><thing>c</thing><thing>d</thing></burble></Dub>','looks good';
 diag $xml if $DEBUG;
 
 class Hup does XML::Class {
@@ -235,9 +235,7 @@ lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class with Objec
 is $xml.root.nodes.elems, 2, "and have there 2 elements in the root";
 is $xml.root[0].name, 'Vub', "and it has the top-level name";
 is $xml.root[0][0].name, "thing", "and it has the child we expected";
-#is $xml.root[0][0].nsURI, "urn:example", "and it has the namespace we expected";
-#.is $xml.root[0][0][0].name, 'thing', "and that has the child we expected";
-is $xml.Str, '<?xml version="1.0"?><Zuf><Vub><thing>blah</thing></Vub><Vub><thing>boom</thing></Vub></Zuf>', "looks good";
+is $xml.Str, '<?xml version="1.0"?><Zuf><Vub><thing>boom</thing></Vub><Vub><thing>blah</thing></Vub></Zuf>', "looks good";
 diag $xml if $DEBUG;
 
 done-testing;
