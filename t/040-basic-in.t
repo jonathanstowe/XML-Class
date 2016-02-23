@@ -133,5 +133,25 @@ isa-ok $out.bar[1], Fod::Bar, "and the attribute is the right class";
 is $out.bar[0].thing, $obj.bar[0].thing, "and its right attribute in it";
 is $out.bar[1].thing, $obj.bar[1].thing, "and its right attribute in it";
 
+class Fom does XML::Class {
+    class Bar {
+        has Str $.thing is xml-element;
+    }
+
+    has Bar @.bar is xml-container('Bars');
+}
+
+$obj = Fom.new(bar => (Fom::Bar.new(thing => 'boom'), Fom::Bar.new(thing => 'poom')));
+$xml = $obj.to-xml;
+
+diag $xml if $DEBUG;
+
+lives-ok { $out = Fom.from-xml($xml); }, "from-xml(Str) class with a positional of inner class with container only";
+isa-ok $out, Fom, "and the class is correct";
+isa-ok $out.bar[0], Fom::Bar, "and the attribute is the right class";
+isa-ok $out.bar[1], Fom::Bar, "and the attribute is the right class";
+is $out.bar[0].thing, $obj.bar[0].thing, "and its right attribute in it";
+is $out.bar[1].thing, $obj.bar[1].thing, "and its right attribute in it";
+
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6
