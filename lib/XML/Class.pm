@@ -335,7 +335,8 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! @obj.of.^shortname;
         my $e = $attribute ~~ ContainerX ?? $element.elements(TAG => $attribute.container-name, :SINGLE) !! $element;
         for $e.elements(TAG => $name) -> $node {
-            @vals.append:  deserialise($node, $attribute, @obj.of); #.($node.firstChild.Str);
+            my $e = $attribute ~~ ElementX ?? $node.firstChild !! $node;
+            @vals.append:  deserialise($e, $attribute, @obj.of); 
         }
         @vals;
     }
@@ -367,7 +368,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     multi sub deserialise(XML::Element $element is copy, Attribute $attribute, Mu $obj) {
         my %args;
 
-        if $attribute ~~ ElementX {
+        if $attribute ~~ ElementX && $element.name ne $obj.^shortname {
             my $name = $attribute.xml-name;
             $element = $element.elements(TAG => $name, :SINGLE);
             if !$element {

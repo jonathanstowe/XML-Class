@@ -88,10 +88,50 @@ $xml = $obj.to-xml;
 
 diag $xml if $DEBUG;
 
-#lives-ok { 
-$out = Foz.from-xml($xml); # }, "from-xml(Str) class with inner class";
+lives-ok { $out = Foz.from-xml($xml); }, "from-xml(Str) class with a positional of inner class";
 isa-ok $out, Foz, "and the class is correct";
 isa-ok $out.bar[0], Foz::Bar, "and the attribute is the right class";
 is $out.bar[0].thing, $obj.bar[0].thing, "and its right attribute in it";
+
+class Fog does XML::Class {
+    class Bar {
+        has Str $.thing is xml-element;
+    }
+
+    has Bar @.bar is xml-element('Stuff');
+}
+
+$obj = Fog.new(bar => (Fog::Bar.new(thing => 'boom'), Fog::Bar.new(thing => 'poom')));
+$xml = $obj.to-xml;
+
+diag $xml if $DEBUG;
+
+lives-ok { $out = Fog.from-xml($xml); }, "from-xml(Str) class with a positional of inner class with xml-element wrapper";
+isa-ok $out, Fog, "and the class is correct";
+isa-ok $out.bar[0], Fog::Bar, "and the attribute is the right class";
+isa-ok $out.bar[1], Fog::Bar, "and the attribute is the right class";
+is $out.bar[0].thing, $obj.bar[0].thing, "and its right attribute in it";
+is $out.bar[1].thing, $obj.bar[1].thing, "and its right attribute in it";
+
+class Fod does XML::Class {
+    class Bar {
+        has Str $.thing is xml-element;
+    }
+
+    has Bar @.bar is xml-element('Stuff') is xml-container('Bars');
+}
+
+$obj = Fod.new(bar => (Fod::Bar.new(thing => 'boom'), Fod::Bar.new(thing => 'poom')));
+$xml = $obj.to-xml;
+
+diag $xml if $DEBUG;
+
+lives-ok { $out = Fod.from-xml($xml); }, "from-xml(Str) class with a positional of inner class with xml-element wrapper and container";
+isa-ok $out, Fod, "and the class is correct";
+isa-ok $out.bar[0], Fod::Bar, "and the attribute is the right class";
+isa-ok $out.bar[1], Fod::Bar, "and the attribute is the right class";
+is $out.bar[0].thing, $obj.bar[0].thing, "and its right attribute in it";
+is $out.bar[1].thing, $obj.bar[1].thing, "and its right attribute in it";
+
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6
