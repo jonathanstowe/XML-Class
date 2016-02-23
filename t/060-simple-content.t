@@ -43,6 +43,53 @@ isa-ok $out.name, Container::Simple, "and so is the inner class";
 is $out.name.name, $obj.name.name, "and the 'name' is right";
 is $out.name.lang, $obj.name.lang, "and so is the 'attribute'";
 
+# This is a typical sort of file that has simple content and complex content
+
+my $xml = $*PROGRAM.parent.child('data/country.xml').slurp;
+
+class Country does XML::Class[xml-element => 'country', xml-namespace => "http://www.example.com/country"] {
+    class Name does XML::Class[xml-element => 'name'] {
+        has Str $.lang;
+        has Str $.name is xml-simple-content;
+    }
+    class Population does XML::Class[xml-element => 'population'] {
+        has Str $.date;
+        has Int $.figure;
+    }
+    class Currency does XML::Class[xml-element => 'currency'] {
+        has Str $.code;
+        has Str $.name;
+
+    }
+    class City does XML::Class[xml-element => 'city'] {
+        has Str $.code;
+        has Str $.name is xml-element;
+    }
+    has Str        $.code;
+    has Name       $.name;
+    has Population $.population;
+    has Currency   $.currency;
+    has City       @.cities;
+}
+
+
+lives-ok { $in = Country.from-xml($xml) }, "from-xml with multiple embedded complex-types";
+is $in.code, "FR", "code is right";
+is $in.name.lang, 'en', 'name/@lang is right';
+is $in.name.name, 'France', 'name is right';
+is $in.population.date, "2000-01-01", 'population/@date is right';
+is $in.population.figure, 60000000, 'population/@figure is right';
+is $in.currency.code, 'EUR', 'currency/@code';
+is $in.currency.name, 'Euro', 'currency/@name';
+
+is $in.cities.elems, 5, "and we have five cities";
+
+for $in.cities -> $city {
+    isa-ok $city, Country::City, "city is the right thing";
+    ok $city.code.defined, "city.code defined { $city.code }";
+    ok $city.name.defined, "city.name defined { $city.name }";
+}
+
 
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6
