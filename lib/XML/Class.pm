@@ -174,7 +174,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             $a.container-name;
         }
         else {
-            $a.xml-name;
+            $a ~~ ElementX ?? $a.xml-name !! $a.name.substr(2);
         }
         my $x = do if $a ~~ NamespaceX {
             if $a ~~ ContainerX && !$container {
@@ -217,7 +217,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     # Not sure why this works in some places and not others
     # hence the overly specific param
 
-    my subset NoArray of Cool where * !~~ Positional;
+    my subset NoArray of Cool where * !~~ Positional|Associative;
 
     multi sub serialise(NoArray $val, PoA $a) {
         $val;
@@ -246,22 +246,14 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         @els;
     }
 
+    # this is simplified because adding them as XML attributes
+    # is almost impossible to do in the reverse direction
     multi sub serialise(%vals, Attribute $a) {
-        my @els;
+        my $els = create-element($a);
         for %vals.kv -> $key, $value {
-            given $a {
-                when ElementX {
-                    if not @els.elems {
-                        @els = create-element($a);
-                    }
-                    @els[0].insert($key, $value);
-                }
-                default {
-                    @els.push: ( $key => $value);
-                }
-            }
+            $els.insert($key, $value);
         }
-        return @els;
+        $els;
     }
 
 

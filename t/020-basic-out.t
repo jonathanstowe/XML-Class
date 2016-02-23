@@ -131,10 +131,12 @@ class Hup does XML::Class {
     has Str %.things;
 }
 
-$f = Hup.new(things => (a => 'A', b => 'B', c => 'C', d => 'D'));
-lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has Associative attribute with plain values";
-is $xml.root.attribs.keys.elems, 4, "and have four attributes in the root";
-is $xml.Str, '<?xml version="1.0"?><Hup a="A" d="D" c="C" b="B"/>', 'looks good';
+$f = Hup.new(things => (a => 'A', b => 'B', c => 'C', d => 'D',));
+lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has Associative attribute with plain values (not qualified)";
+is $xml.root.nodes.elems, 1, "and have there 1 elements in the root";
+is $xml.root[0].name, 'things', "and it has the top-level name";
+is $xml.root[0].nodes.elems, 4, "and there are child elements";
+is $xml.Str, '<?xml version="1.0"?><Hup><things><b>B</b><c>C</c><d>D</d><a>A</a></things></Hup>', 'looks good';
 diag $xml if $DEBUG;
 
 class Hut does XML::Class {
@@ -142,11 +144,23 @@ class Hut does XML::Class {
 }
 
 $f = Hut.new(things => (a => 'A', b => 'B', c => 'C', d => 'D'));
-lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has Associative attribute with plain values";
+lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has Associative attribute with plain values (with xml-element)";
 is $xml.root.nodes.elems, 1, "and have there 1 elements in the root";
 is $xml.root[0].name, 'things', "and it has the top-level name";
 is $xml.root[0].nodes.elems, 4, "and there are child elements";
 is $xml.Str, '<?xml version="1.0"?><Hut><things><b>B</b><c>C</c><d>D</d><a>A</a></things></Hut>', 'looks good';
+diag $xml if $DEBUG;
+
+class Hun does XML::Class {
+    has Str %.things is xml-element('stuff');
+}
+
+$f = Hun.new(things => (a => 'A', b => 'B', c => 'C', d => 'D'));
+lives-ok { $xml = $f.to-xml(:document);  }, "to-xml(:document) -class has Associative attribute with plain values (with xml-element(name))";
+is $xml.root.nodes.elems, 1, "and have there 1 elements in the root";
+is $xml.root[0].name, 'stuff', "and it has the top-level name";
+is $xml.root[0].nodes.elems, 4, "and there are child elements";
+is $xml.Str, '<?xml version="1.0"?><Hun><stuff><b>B</b><c>C</c><d>D</d><a>A</a></stuff></Hun>', 'looks good';
 diag $xml if $DEBUG;
 
 class Zut does XML::Class {
