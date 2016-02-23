@@ -347,11 +347,12 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     }
     multi sub deserialise(XML::Element $element, Attribute $attribute, Mu @obj) {
         my @vals;
-        my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! @obj.of.^shortname;
+        my $t = @obj.of;
+        my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! $t ~~ XML::Class ?? $t.xml-element !! $t.^shortname;
         my $e = $attribute ~~ ContainerX ?? $element.elements(TAG => $attribute.container-name, :SINGLE) !! $element;
         for $e.elements(TAG => $name) -> $node {
             my $e = $attribute ~~ ElementX ?? $node.firstChild !! $node;
-            @vals.append:  deserialise($e, $attribute, @obj.of); 
+            @vals.append:  deserialise($e, $attribute, $t); 
         }
         @vals;
     }

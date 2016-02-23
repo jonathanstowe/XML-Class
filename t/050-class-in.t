@@ -88,6 +88,28 @@ is $out.bee[0].string, $obj.bee[0].string, "the attribute match";
 isa-ok $out.bee[1], D::B, "and the XML::Class attribute (second element) is the correct thing";
 is $out.bee[1].string, $obj.bee[1].string, "the attribute match";
 
+class F does XML::Class[xml-element => "a"] {
+    class B does XML::Class[xml-element => 'bee'] {
+        has Str $.string is xml-element;
+    }
+
+    has B @.bee;
+}
+
+$obj = F.new(bee => (F::B.new(string => 'boom'), F::B.new(string => 'doom')));
+$xml = $obj.to-xml;
+
+diag $xml if $DEBUG;
+
+lives-ok { $out = F.from-xml($xml); }, "from-xml() array of inner XML::Class with element name on outer inner xml-element iner with name";
+
+
+isa-ok $out, F, "got the correct type back";
+isa-ok $out.bee[0], F::B, "and the XML::Class attribute (first element) is the correct thing";
+is $out.bee[0].string, $obj.bee[0].string, "the attribute match";
+isa-ok $out.bee[1], F::B, "and the XML::Class attribute (second element) is the correct thing";
+is $out.bee[1].string, $obj.bee[1].string, "the attribute match";
+
 class E does XML::Class[xml-element => "a"] {
     class B does XML::Class {
         has Str $.string is xml-element;
