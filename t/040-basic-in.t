@@ -6,7 +6,7 @@ use Test;
 
 use XML::Class;
 
-my $DEBUG = True;
+my Bool $DEBUG;
 
 class SimpleClass does XML::Class {
     has Int $.version;
