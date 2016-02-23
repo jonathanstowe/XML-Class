@@ -43,9 +43,17 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     }
 
+    # This is to provide "simple content" within a complext type
+    my role ContentX does NodeX {
+    }
+
     my role NamespaceX[:$xml-namespace, :$xml-namespace-prefix] does NodeX {
         has $.xml-namespace        = $xml-namespace;
         has $.xml-namespace-prefix = $xml-namespace-prefix;
+    }
+
+    multi sub trait_mod:<is> (Attribute $a, :$xml-simple-content!) {
+        $a does ContentX;
     }
 
     multi sub trait_mod:<is> (Attribute $a, :$xml-namespace! (Str $namespace, $namespace-prefix?)) {
@@ -140,7 +148,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
                         self.append($value);
                     }
                     when XML::Text {
-                        self.append($name, $value);
+                        self.append($value);
                     }
                     when Pair {
                         self.set($_.key, $_.value);
@@ -261,6 +269,10 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $val.to-xml(:element, attribute => $a);
     }
 
+    multi sub serialise(Cool $val, ContentX $a) {
+        XML::Text.new(text => $val);
+    }
+
     multi sub serialise(Mu:D $val, Attribute $a, $xml-element?, $xml-namespace?, $xml-namespace-prefix? ) {
         my $name = $xml-element // $val.^shortname;
         my $xe = create-element($name, $xml-namespace, $xml-namespace-prefix);
@@ -315,6 +327,9 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         my $name = $attribute.xml-name;
         my $node = $element.elements(TAG => $name, :SINGLE);
         $obj($node.firstChild.Str);
+    }
+    multi sub deserialise(XML::Element $element, ContentX $attribute, $obj) {
+        $obj($element.firstChild.Str);
     }
 
     multi sub deserialise(XML::Text $text, Attribute $attribute, $obj) {
