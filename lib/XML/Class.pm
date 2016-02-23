@@ -6,7 +6,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     # need to close over these to use within blocks that might have their own defined
     method xml-element {
-        $xml-element;
+        $xml-element // $?CLASS.^shortname;
     }
     method xml-namespace {
         $xml-namespace;
@@ -368,15 +368,16 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     multi sub deserialise(XML::Element $element is copy, Attribute $attribute, Mu $obj) {
         my %args;
 
-        if $attribute ~~ ElementX && $element.name ne $obj.^shortname {
+        my $name = $obj ~~ XML::Class ?? $obj.xml-element !! $obj.^shortname;
+
+        if $attribute ~~ ElementX && $element.name ne $name {
             my $name = $attribute.xml-name;
             $element = $element.elements(TAG => $name, :SINGLE);
             if !$element {
                 X::NoElement.new(element => $name, attribute => $attribute).throw
             }
         }
-        if $element.name ne $obj.^shortname {
-            my $name = $obj.^shortname;
+        if $element.name ne $name {
             $element = $element.elements(TAG => $name, :SINGLE);
             if !$element {
                 X::NoElement.new(element => $name, attribute => $attribute).throw
