@@ -105,6 +105,68 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             $!xml-namespace-prefix;
         }
 
+        # These are for parsing, the above is for generating
+        has Str $.local-name;
+
+        method local-name() {
+            
+            if not $!local-name.defined {
+                if $.name.index(':') {
+                    ( $!prefix, $!local-name) = $.name.split(':', 2);
+                }
+                else {
+                    $!local-name = $.name;
+                }
+            }
+            $!local-name;
+        }
+
+        has Str $.prefix;
+
+        # may not be a prefix but will always be a local-name
+        method prefix() {
+            if not $!local-name.defined {
+                my $ = self.local-name;
+            }
+            $!prefix;
+        }
+
+
+        has Str %.namespaces;
+
+        method local-namespaces() {
+            sub map-ns(Pair $p) {
+                my $key = do if $p.key.index(':') { 
+                        $p.key.split(':')[1] 
+                } 
+                else { 
+                    'default'
+                }; 
+                $key => $p.value;
+            }
+            self.attribs.pairs.grep( { $_.key.starts-with('xmlns') }).map(&map-ns).hash;
+        }
+
+        method namespaces() {
+            if not %!namespaces.keys {
+                my %parents;
+                if self.parent.defined {
+                    %parents = self.parent.?namepaces // Empty;
+                }
+                %!namespaces = %parents, self.local-namespaces;
+            }
+            %!namespaces;
+        }
+
+        method namespace() {
+            my $prefix = self.prefix // 'default';
+            self.namespaces{$prefix};
+        }
+
+        method prefix-for-namespace(Str:D $ns) {
+            self.namespaces.invert.hash{$ns};
+        }
+
         method add-object-attribute(Mu:D $val, Attribute $attribute) {
             if $attribute.has_accessor {
                 my $name = self.make-name($attribute);
@@ -313,30 +375,36 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         deserialise($xml, $attribute, self);
     }
 
-    multi sub deserialise(XML::Element $element, PoA $attribute, NoArray $obj) {
+    multi sub deserialise(XML::Element $element, PoA $attribute, NoArray $obj, :$namespace) {
         my $val = $element.attribs{$attribute.name.substr(2)};
         $obj($val);
     }
 
-    multi sub deserialise(XML::Element $element, AttributeX $attribute, NoArray $obj) {
+    multi sub deserialise(XML::Element $element, AttributeX $attribute, NoArray $obj, :$namespace) {
         my $val = $element.attribs{$attribute.xml-name};
         $obj($val);
     }
 
-    multi sub deserialise(XML::Element $element, ElementX $attribute, NoArray $obj) {
+    multi sub deserialise(XML::Element $element, ElementX $attribute, NoArray $obj, :$namespace) {
         my $name = $attribute.xml-name;
-        my $node = $element.elements(TAG => $name, :SINGLE);
+        if $namespace {
+            my $prefix = $element.prefix-for-namespace($namespace);
+            if $prefix {
+                $name = "$prefix:$name";
+            }
+        }
+        my $node = $element.elements(TAG => $name, :SINGLE) || $element.elements.grep({ $_.local-name eq $name && $_.namespace eq $namespace }).first;
         $obj($node.firstChild.Str);
     }
-    multi sub deserialise(XML::Element $element, ContentX $attribute, $obj) {
+    multi sub deserialise(XML::Element $element, ContentX $attribute, $obj, :$namespace) {
         $obj($element.firstChild.Str);
     }
 
-    multi sub deserialise(XML::Text $text, Attribute $attribute, $obj) {
+    multi sub deserialise(XML::Text $text, Attribute $attribute, $obj, :$namespace) {
         $obj($text.Str);
     }
 
-    multi sub deserialise(XML::Element $element, Attribute $attribute, Cool @obj) {
+    multi sub deserialise(XML::Element $element, Attribute $attribute, Cool @obj, :$namespace) {
         my @vals;
         my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! $attribute.name.substr(2);
         my $e = $attribute ~~ ContainerX ?? $element.elements(TAG => $attribute.container-name, :SINGLE) !! $element;
@@ -345,7 +413,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
         @vals;
     }
-    multi sub deserialise(XML::Element $element, Attribute $attribute, Mu @obj) {
+    multi sub deserialise(XML::Element $element, Attribute $attribute, Mu @obj, :$namespace) {
         my @vals;
         my $t = @obj.of;
         my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! $t ~~ XML::Class ?? $t.xml-element !! $t.^shortname;
@@ -357,7 +425,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         @vals;
     }
 
-    multi sub deserialise(XML::Element $element, Attribute $attribute, Cool %obj) {
+    multi sub deserialise(XML::Element $element, Attribute $attribute, Cool %obj, :$namespace) {
         my %vals;
 
         if $attribute ~~ ElementX {
@@ -381,20 +449,34 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
     }
 
-    multi sub deserialise(XML::Element $element is copy, Attribute $attribute, Mu $obj) {
+    multi sub deserialise(XML::Element $element is copy, Attribute $attribute, Mu $obj, :$namespace) {
         my %args;
+
+        if $element !~~ ElementWrapper {
+            $element does ElementWrapper;
+        }
 
         my $name = $obj ~~ XML::Class ?? $obj.xml-element !! $obj.^shortname;
 
+        my $ns = $obj ~~ XML::Class ?? $obj.xml-namespace // $namespace !! $namespace;
+
+        if $ns {
+            my $prefix = $element.prefix-for-namespace($ns);
+            if $prefix  && $prefix ne 'default' {
+                $name = "$prefix:$name";
+            }
+        }
+
+
         if $attribute ~~ ElementX && $element.name ne $name {
             my $name = $attribute.xml-name;
-            $element = $element.elements(TAG => $name, :SINGLE);
+            $element = $element.elements(TAG => $name, :SINGLE) || $element.elements.grep({ $_.local-name eq $name && $_.namespace eq $ns}).first;
             if !$element {
                 X::NoElement.new(element => $name, attribute => $attribute).throw
             }
         }
         if $element.name ne $name {
-            $element = $element.elements(TAG => $name, :SINGLE);
+            $element = $element.elements(TAG => $name, :SINGLE) || $element.elements.grep({ $_.local-name eq $name && $_.namespace eq $ns}).first;
             if !$element {
                 X::NoElement.new(element => $name, attribute => $attribute).throw
             }
@@ -402,7 +484,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
         for $obj.^attributes -> $attr {
             my $attr-name = $attr.name.substr(2);
-            %args{$attr-name} := deserialise($element, $attr, $attr.type);
+            %args{$attr-name} := deserialise($element, $attr, $attr.type, namespace => $ns);
         }
 
         return $obj.new(|%args);
