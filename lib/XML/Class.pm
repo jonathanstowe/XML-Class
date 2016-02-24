@@ -112,7 +112,6 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         has Str $.local-name;
 
         method local-name() {
-            
             if not $!local-name.defined {
                 if $.name.index(':') {
                     ( $!prefix, $!local-name) = $.name.split(':', 2);
@@ -172,10 +171,11 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             self.namespaces.invert.hash{$ns};
         }
 
-        method add-object-attribute(Mu:D $val, Attribute $attribute) {
+        method add-object-attribute(Mu $val, Attribute $attribute) {
             if $attribute.has_accessor {
                 my $name = self.make-name($attribute);
-                my $values = serialise($attribute.get_value($val), $attribute);
+                my $value = $val.defined ?? $attribute.get_value($val) !! $attribute.type;
+                my $values = serialise($value, $attribute);
                 self.add-value($name, $values);
             }
         }
@@ -227,6 +227,9 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             }
         }
 
+        multi sub check-role(Any:U) {
+            Nil
+        }
         multi sub check-role(ElementWrapper $element) returns ElementWrapper {
             $element;
         }
@@ -335,7 +338,9 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     multi sub serialise(Cool $val, ElementX $a) {
         my $x = create-element($a);
-        $x.insert(XML::Text.new(text => $val));
+        if $val.defined {
+            $x.insert(XML::Text.new(text => $val));
+        }
         $x;
     }
 
@@ -346,7 +351,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     my subset NoArray of Cool where * !~~ Positional|Associative;
 
     multi sub serialise(NoArray $val, PoA $a) {
-        $val;
+        $val // '';
     }
 
     multi sub serialise(Cool $val, AttributeX $a) {
@@ -391,7 +396,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         XML::Text.new(text => $val);
     }
 
-    multi sub serialise(Mu:D $val, Attribute $a, $xml-element?, $xml-namespace?, $xml-namespace-prefix? ) {
+    multi sub serialise(Mu $val, Attribute $a, $xml-element?, $xml-namespace?, $xml-namespace-prefix? ) {
         my $name = $xml-element // $val.^shortname;
         my $xe = create-element($name, $xml-namespace, $xml-namespace-prefix);
         for $val.^attributes -> $attribute {
@@ -425,7 +430,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     }
 
     multi method from-xml(XML::Class:U: XML::Element:D $xml, Attribute :$attribute) returns XML::Class {
-        deserialise($xml, $attribute, self);
+        deserialise($xml, $attribute, self, :outer);
     }
 
     # Make sure we have all our helpers
@@ -452,7 +457,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
 
         my $node = $element.find-child($name, $namespace);
-        $obj($node.firstChild.Str);
+        $node.defined ?? $obj($node.firstChild.Str) !! $obj;
     }
 
     multi sub deserialise(ElementWrapper $element, ContentX $attribute, $obj, Str :$namespace) {
@@ -479,9 +484,12 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             $namespace = $t ~~ XML::Class ?? $t.xml-namespace !! $element.namespace;
         }
         my $e = $element.strip-wrapper($attribute, :$namespace);
-        $namespace = $t ~~ XML::Class ?? $t.xml-namespace !! $attribute ~~ NamespaceX ?? $attribute.xml-namespace !! $e.namespace;
-        for $e.positional-children($name, $attribute, $t, :$namespace) -> $node {
-            @vals.append:  deserialise($node, $attribute, $t, :$namespace);
+
+        if $e.defined {
+            $namespace = $t ~~ XML::Class ?? $t.xml-namespace !! $attribute ~~ NamespaceX ?? $attribute.xml-namespace !! $e.namespace;
+            for $e.positional-children($name, $attribute, $t, :$namespace) -> $node {
+                @vals.append:  deserialise($node, $attribute, $t, :$namespace);
+            }
         }
         @vals;
     }
@@ -506,11 +514,16 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         has Str $.element is required;
         has Attribute $.attribute is required;
         method message() {
-            "Expected element '{ $!element }' not found for attribute '{ $!attribute.name.substr(2) }'";
+            if $.attribute.defined {
+                "Expected element '{ $!element }' not found for attribute '{ $!attribute.name.substr(2) }'";
+            }
+            else {
+                "Expected element '{ $!element }' not found";
+            }
         }
     }
 
-    multi sub deserialise(ElementWrapper $element is copy, Attribute $attribute, Mu $obj, Str :$namespace) {
+    multi sub deserialise(ElementWrapper $element is copy, Attribute $attribute, Mu $obj, Str :$namespace, Bool :$outer) {
 
         my $name = $obj ~~ XML::Class ?? $obj.xml-element !! $obj.^shortname;
 
@@ -533,18 +546,22 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
         if $element.name ne $name {
             $element = $element.find-child($name, $ns);
-            if !$element {
+            if !$element && $outer {
                 X::NoElement.new(element => $name, attribute => $attribute).throw
             }
         }
 
-        my %args;
-        for $obj.^attributes -> $attr {
-            my $attr-name = $attr.name.substr(2);
-            %args{$attr-name} := deserialise($element, $attr, $attr.type, namespace => $ns);
-        }
 
-        return $obj.new(|%args);
+        my $ret = $obj;
+        if $element {
+            my %args;
+            for $obj.^attributes -> $attr {
+                my $attr-name = $attr.name.substr(2);
+                %args{$attr-name} := deserialise($element, $attr, $attr.type, namespace => $ns);
+            }
+            $ret = $obj.new(|%args);
+        }
+        $ret;
     }
 }
 
