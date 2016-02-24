@@ -222,6 +222,18 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             }
         }
 
+        # better find by namespace
+        # also ensure we have the role
+        method find-child(Str $name, Str $ns?) {
+            my $element = self.elements(TAG => $name, :SINGLE) || self.elements.grep({ $_.local-name eq $name && $_.namespace eq $ns}).first;
+
+            if $element !~~ $?ROLE {
+                $element does $?ROLE;
+            }
+
+            $element
+        }
+
         method setNamespace($uri, $prefix?) {
             callsame;
             $!xml-namespace = $uri;
@@ -369,23 +381,25 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     }
 
     multi method from-xml(XML::Class:U: XML::Element:D $xml, Attribute :$attribute) returns XML::Class {
-        if $xml !~~ ElementWrapper {
-            $xml does ElementWrapper;
-        }
         deserialise($xml, $attribute, self);
     }
 
-    multi sub deserialise(XML::Element $element, PoA $attribute, NoArray $obj, :$namespace) {
+    multi sub deserialise(XML::Element $element, |c) {
+        $element does ElementWrapper;
+        samewith($element, |c);
+    }
+
+    multi sub deserialise(ElementWrapper $element, PoA $attribute, NoArray $obj, Str :$namespace) {
         my $val = $element.attribs{$attribute.name.substr(2)};
         $obj($val);
     }
 
-    multi sub deserialise(XML::Element $element, AttributeX $attribute, NoArray $obj, :$namespace) {
+    multi sub deserialise(ElementWrapper $element, AttributeX $attribute, NoArray $obj, Str :$namespace) {
         my $val = $element.attribs{$attribute.xml-name};
         $obj($val);
     }
 
-    multi sub deserialise(XML::Element $element, ElementX $attribute, NoArray $obj, :$namespace) {
+    multi sub deserialise(ElementWrapper $element, ElementX $attribute, NoArray $obj, Str :$namespace) {
         my $name = $attribute.xml-name;
         if $namespace {
             my $prefix = $element.prefix-for-namespace($namespace);
@@ -393,18 +407,19 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
                 $name = "$prefix:$name";
             }
         }
-        my $node = $element.elements(TAG => $name, :SINGLE) || $element.elements.grep({ $_.local-name eq $name && $_.namespace eq $namespace }).first;
+        my $node = $element.find-child($name, $namespace);
         $obj($node.firstChild.Str);
     }
-    multi sub deserialise(XML::Element $element, ContentX $attribute, $obj, :$namespace) {
+
+    multi sub deserialise(ElementWrapper $element, ContentX $attribute, $obj, Str :$namespace) {
         $obj($element.firstChild.Str);
     }
 
-    multi sub deserialise(XML::Text $text, Attribute $attribute, $obj, :$namespace) {
+    multi sub deserialise(XML::Text $text, Attribute $attribute, $obj, Str :$namespace) {
         $obj($text.Str);
     }
 
-    multi sub deserialise(XML::Element $element, Attribute $attribute, Cool @obj, :$namespace) {
+    multi sub deserialise(ElementWrapper $element, Attribute $attribute, Cool @obj, Str :$namespace) {
         my @vals;
         my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! $attribute.name.substr(2);
         my $e = $attribute ~~ ContainerX ?? $element.elements(TAG => $attribute.container-name, :SINGLE) !! $element;
@@ -413,7 +428,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
         @vals;
     }
-    multi sub deserialise(XML::Element $element, Attribute $attribute, Mu @obj, :$namespace) {
+    multi sub deserialise(ElementWrapper $element, Attribute $attribute, Mu @obj, Str :$namespace) {
         my @vals;
         my $t = @obj.of;
         my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! $t ~~ XML::Class ?? $t.xml-element !! $t.^shortname;
@@ -425,7 +440,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         @vals;
     }
 
-    multi sub deserialise(XML::Element $element, Attribute $attribute, Cool %obj, :$namespace) {
+    multi sub deserialise(ElementWrapper $element, Attribute $attribute, Cool %obj, Str :$namespace) {
         my %vals;
 
         if $attribute ~~ ElementX {
@@ -449,15 +464,11 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
     }
 
-    multi sub deserialise(XML::Element $element is copy, Attribute $attribute, Mu $obj, :$namespace) {
-
-        if $element !~~ ElementWrapper {
-            $element does ElementWrapper;
-        }
+    multi sub deserialise(ElementWrapper $element is copy, Attribute $attribute, Mu $obj, Str :$namespace) {
 
         my $name = $obj ~~ XML::Class ?? $obj.xml-element !! $obj.^shortname;
 
-        my $ns = $obj ~~ XML::Class ?? $obj.xml-namespace // $namespace !! $namespace;
+        my Str $ns = $obj ~~ XML::Class ?? $obj.xml-namespace // $namespace !! $namespace;
 
         if $ns {
             my $prefix = $element.prefix-for-namespace($ns);
@@ -469,13 +480,13 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
         if $attribute ~~ ElementX && $element.name ne $name {
             my $name = $attribute.xml-name;
-            $element = $element.elements(TAG => $name, :SINGLE) || $element.elements.grep({ $_.local-name eq $name && $_.namespace eq $ns}).first;
+            $element = $element.find-child($name, $ns);
             if !$element {
                 X::NoElement.new(element => $name, attribute => $attribute).throw
             }
         }
         if $element.name ne $name {
-            $element = $element.elements(TAG => $name, :SINGLE) || $element.elements.grep({ $_.local-name eq $name && $_.namespace eq $ns}).first;
+            $element = $element.find-child($name, $ns);
             if !$element {
                 X::NoElement.new(element => $name, attribute => $attribute).throw
             }
