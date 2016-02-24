@@ -222,16 +222,50 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             }
         }
 
-        # better find by namespace
-        # also ensure we have the role
-        method find-child(Str $name, Str $ns?) {
-            my $element = self.elements(TAG => $name, :SINGLE) || self.elements.grep({ $_.local-name eq $name && $_.namespace eq $ns}).first;
+        multi sub check-role(ElementWrapper $element) returns ElementWrapper {
+            $element;
+        }
 
+        multi sub check-role(XML::Element $element where * !~~ ElementWrapper ) returns ElementWrapper {
             if $element !~~ $?ROLE {
                 $element does $?ROLE;
             }
-
             $element
+        }
+
+        multi sub check-role(XML::Text $node) {
+            $node;
+        }
+
+        # better find by namespace
+        method find-child(Str $name, Str $ns?) {
+            my $element = self.elements(TAG => $name, :SINGLE) || self.elements.grep({ $_.local-name eq $name && $_.namespace eq $ns}).first;
+            check-role($element);
+        }
+
+        method find-children(Str $name, Str $ns?) {
+            (self.elements(TAG => $name) || self.elements.grep({ $_.local-name eq $name && $_.namespace eq $ns})).map(&check-role);
+        }
+
+        multi method positional-element(Attribute $attribute, Cool $t) {
+            check-role(self.firstChild);
+        }
+
+        multi method positional-element(Attribute $attribute, Mu $t) {
+            check-role( $attribute ~~ ElementX ?? self.firstChild !! self);
+        }
+
+        method positional-children(Str $name, Attribute $attribute, Mu $t, Str :$namespace) {
+            my @elements;
+
+            for self.find-children($name, $namespace) -> $node {
+                @elements.append: $node.positional-element($attribute, $t);
+            }
+            @elements;
+        }
+
+        method strip-wrapper(Attribute $attribute, Str :$namespace) {
+            $attribute ~~ ContainerX ?? self.find-child($attribute.container-name, $namespace) !! self;
         }
 
         method setNamespace($uri, $prefix?) {
@@ -384,6 +418,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         deserialise($xml, $attribute, self);
     }
 
+    # Make sure we have all our helpers
     multi sub deserialise(XML::Element $element, |c) {
         $element does ElementWrapper;
         samewith($element, |c);
@@ -419,23 +454,21 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $obj($text.Str);
     }
 
-    multi sub deserialise(ElementWrapper $element, Attribute $attribute, Cool @obj, Str :$namespace) {
-        my @vals;
-        my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! $attribute.name.substr(2);
-        my $e = $attribute ~~ ContainerX ?? $element.elements(TAG => $attribute.container-name, :SINGLE) !! $element;
-        for $e.elements(TAG => $name) -> $node {
-            @vals.append:  deserialise($node.firstChild, $attribute, @obj.of); #.($node.firstChild.Str);
-        }
-        @vals;
+    multi sub get-positional-name(Attribute $attribute, Cool $t, :$namespace) {
+        $attribute ~~ ElementX ?? $attribute.xml-name !! $attribute.name.substr(2);
     }
-    multi sub deserialise(ElementWrapper $element, Attribute $attribute, Mu @obj, Str :$namespace) {
+
+    multi sub get-positional-name(Attribute $attribute, Mu $t, Str :$namespace) {
+        $attribute ~~ ElementX ?? $attribute.xml-name !! $t ~~ XML::Class ?? $t.xml-element !! $t.^shortname;
+    }
+
+    multi sub deserialise(ElementWrapper $element, Attribute $attribute, @obj, Str :$namespace) {
         my @vals;
         my $t = @obj.of;
-        my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! $t ~~ XML::Class ?? $t.xml-element !! $t.^shortname;
-        my $e = $attribute ~~ ContainerX ?? $element.elements(TAG => $attribute.container-name, :SINGLE) !! $element;
-        for $e.elements(TAG => $name) -> $node {
-            my $e = $attribute ~~ ElementX ?? $node.firstChild !! $node;
-            @vals.append:  deserialise($e, $attribute, $t); 
+        my $name = get-positional-name($attribute, $t, :$namespace);
+        my $e = $element.strip-wrapper($attribute, :$namespace);
+        for $e.positional-children($name, $attribute, $t, :$namespace) -> $node {
+            @vals.append:  deserialise($node, $attribute, $t, :$namespace);
         }
         @vals;
     }
