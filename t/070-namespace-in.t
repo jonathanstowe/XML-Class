@@ -48,7 +48,30 @@ $out = NamedWithPositional.from-xml($in);   }, "from-xml with prefixed namespace
 
 isa-ok $out, NamedWithPositional, "got the right thing";
 is $out.string, $obj.string, "outer string is right";
-diag $out.to-xml();
+
+ok $out.inners.elems, "got the inner items";
+for ^$out.inners.elems -> $i {
+    isa-ok $out.inners[$i], Inner, "and the inner class";
+    is $out.inners[$i].string, $obj.inners[$i].string, "inner string is right";
+}
+
+class NamedWithPositionalBody does XML::Class[xml-namespace => 'http://example.com/named', xml-namespace-prefix => 'nx'] {
+    has Inner @.inners is xml-container('Body') is xml-namespace('http://example.com/body', 'body');
+    has Str   $.string is xml-element;
+}
+
+$obj = NamedWithPositionalBody.new(string => 'thing', inners => (Inner.new(string => 'inner-thing'), Inner.new(string => 'other-thing')));
+lives-ok { $in = $obj.to-xml(); }, "to-xml() with namespace and array of inner class with namespace";
+
+diag $in if $DEBUG;
+
+
+lives-ok {
+$out = NamedWithPositionalBody.from-xml($in);
+}, "from-xml with prefixed namespaces and array inner class with namespace (different container)";
+
+isa-ok $out, NamedWithPositionalBody, "got the right thing";
+is $out.string, $obj.string, "outer string is right";
 
 ok $out.inners.elems, "got the inner items";
 for ^$out.inners.elems -> $i {

@@ -266,7 +266,12 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             @elements;
         }
 
-        method strip-wrapper(Attribute $attribute, Str :$namespace) {
+        method strip-wrapper(Attribute $attribute, Str :$namespace is copy) {
+
+            if !$namespace.defined || $attribute ~~ NamespaceX {
+                $namespace = $attribute ~~ NamespaceX ?? $attribute.xml-namespace !! self.namespace;
+            }
+            
             check-role($attribute ~~ ContainerX ?? self.find-child($attribute.container-name, $namespace) !! self);
         }
 
