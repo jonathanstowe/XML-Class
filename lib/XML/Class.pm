@@ -540,11 +540,11 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         if $attribute ~~ ElementX && $element.name ne $name {
             my $name = $attribute.xml-name;
             $element = $element.find-child($name, $ns);
-            if !$element {
+            if !$element && $outer {
                 X::NoElement.new(element => $name, attribute => $attribute).throw
             }
         }
-        if $element.name ne $name {
+        if $element.defined && $element.name ne $name {
             $element = $element.find-child($name, $ns);
             if !$element && $outer {
                 X::NoElement.new(element => $name, attribute => $attribute).throw

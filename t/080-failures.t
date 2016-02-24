@@ -97,5 +97,23 @@ throws-like {
     my $y = MissingObject.from-xml('<?xml version="1.0"?><MissingFoo />');
 }, X::NoElement, message => "Expected element 'MissingObject' not found", "missing matching outer element (from-xml)";
 
+class MissingObjectContainer does XML::Class {
+    class Inner {
+        has Str $.str is xml-element;
+    }
+    has Inner $.inner is xml-element('Object');
+}
+lives-ok {
+    my $x = MissingObjectContainer.new.to-xml;
+    diag $x if $DEBUG;
+}, "class with object typed attribute container uninitialised (to-xml)";
+
+lives-ok {
+    my $x = MissingObjectContainer.from-xml('<?xml version="1.0"?><MissingObjectContainer><Object /></MissingObjectContainer>');
+}, "from-xml empty object element container";
+lives-ok {
+    my $x = MissingObjectContainer.from-xml('<?xml version="1.0"?><MissingObjectContainer />');
+}, "from-xml missing object element container";
+
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6
