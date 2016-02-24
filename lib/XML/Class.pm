@@ -443,14 +443,13 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     my class X::NoElement is Exception {
         has Str $.element is required;
-        has Str $.attribute is required;
+        has Attribute $.attribute is required;
         method message() {
             "Expected element '{ $!element }' not found for attribute '{ $!attribute.name.substr(2) }'";
         }
     }
 
     multi sub deserialise(XML::Element $element is copy, Attribute $attribute, Mu $obj, :$namespace) {
-        my %args;
 
         if $element !~~ ElementWrapper {
             $element does ElementWrapper;
@@ -482,6 +481,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             }
         }
 
+        my %args;
         for $obj.^attributes -> $attr {
             my $attr-name = $attr.name.substr(2);
             %args{$attr-name} := deserialise($element, $attr, $attr.type, namespace => $ns);
