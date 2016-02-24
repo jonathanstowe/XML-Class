@@ -47,15 +47,18 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     my role ContentX does NodeX {
     }
 
-    my role NamespaceX[:$xml-namespace, :$xml-namespace-prefix] does NodeX {
-        has $.xml-namespace        = $xml-namespace;
-        has $.xml-namespace-prefix = $xml-namespace-prefix;
+    my role NamespaceX[Str :$xml-namespace, Str :$xml-namespace-prefix] does NodeX {
+        has Str $.xml-namespace        = $xml-namespace;
+        has Str $.xml-namespace-prefix = $xml-namespace-prefix;
     }
 
     multi sub trait_mod:<is> (Attribute $a, :$xml-simple-content!) {
         $a does ContentX;
     }
 
+    multi sub trait_mod:<is> (Attribute $a, Str :$xml-namespace) {
+        $a does NamespaceX[:$xml-namespace];
+    }
     multi sub trait_mod:<is> (Attribute $a, :$xml-namespace! (Str $namespace, $namespace-prefix?)) {
         $a does NamespaceX[xml-namespace => $namespace, xml-namespace-prefix => $namespace-prefix];
     }
@@ -441,14 +444,13 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $obj($val);
     }
 
-    multi sub deserialise(ElementWrapper $element, ElementX $attribute, NoArray $obj, Str :$namespace) {
+    multi sub deserialise(ElementWrapper $element, ElementX $attribute, NoArray $obj, Str :$namespace is copy) {
         my $name = $attribute.xml-name;
-        if $namespace {
-            my $prefix = $element.prefix-for-namespace($namespace);
-            if $prefix {
-                $name = "$prefix:$name";
-            }
+
+        if $attribute ~~ NamespaceX {
+            $namespace = $attribute.xml-namespace;
         }
+
         my $node = $element.find-child($name, $namespace);
         $obj($node.firstChild.Str);
     }
@@ -477,7 +479,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             $namespace = $t ~~ XML::Class ?? $t.xml-namespace !! $element.namespace;
         }
         my $e = $element.strip-wrapper($attribute, :$namespace);
-        $namespace = $t ~~ XML::Class ?? $t.xml-namespace !! $element.namespace;
+        $namespace = $t ~~ XML::Class ?? $t.xml-namespace !! $attribute ~~ NamespaceX ?? $attribute.xml-namespace !! $e.namespace;
         for $e.positional-children($name, $attribute, $t, :$namespace) -> $node {
             @vals.append:  deserialise($node, $attribute, $t, :$namespace);
         }

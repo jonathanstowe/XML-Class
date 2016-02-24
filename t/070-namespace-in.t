@@ -4,7 +4,7 @@ use v6;
 
 use Test;
 
-my Bool $DEBUG = True;
+my Bool $DEBUG;
 
 use XML::Class;
 
@@ -43,7 +43,7 @@ lives-ok { $in = $obj.to-xml(); }, "to-xml() with namespace and array of inner c
 diag $in if $DEBUG;
 
 
-lives-ok { 
+lives-ok {
 $out = NamedWithPositional.from-xml($in);   }, "from-xml with prefixed namespaces and array inner class with namespace";
 
 isa-ok $out, NamedWithPositional, "got the right thing";
@@ -78,6 +78,78 @@ for ^$out.inners.elems -> $i {
     isa-ok $out.inners[$i], Inner, "and the inner class";
     is $out.inners[$i].string, $obj.inners[$i].string, "inner string is right";
 }
+
+class NamedWithLocal does XML::Class[xml-namespace => 'http://example.com/local'] {
+    class Inner {
+        has Str $.string is xml-element is xml-namespace('http://example.com/string');
+        has Int $.int    is xml-element('Int');
+    }
+    has Inner $.inner;
+    has Str   $.string is xml-element is xml-namespace('http://example.com/string', 'st');
+}
+
+$obj = NamedWithLocal.new(string => 'outer-string', inner => NamedWithLocal::Inner.new(string => 'inner-string', int => 10));
+lives-ok {
+$in = $obj.to-xml();
+}, "to-xml with default namespace, inner class with namespace on attribute";
+diag $in if $DEBUG;
+lives-ok {
+    $out = NamedWithLocal.from-xml($in);
+}, "from-xml with un-namespaced inner class with attribute with different namespace";
+
+is $out.string, $obj.string, "got the right attribute for the outer";
+is $out.inner.string, $obj.inner.string, "got the right attribute for the inner";
+is $out.inner.int, $obj.inner.int, "for the right attribute for the inner int";
+
+
+class Zuy does XML::Class[xml-namespace => 'urn:zub', xml-namespace-prefix => 'z'] {
+            has Str @.things is xml-element('thing') is xml-container is xml-namespace('urn:thing', 'th');
+}
+
+$obj = Zuy.new(things => <a b c d>);
+
+lives-ok {
+$in = $obj.to-xml();
+}, "to-xml namespaced with namespaced contained positional";
+
+
+
+diag $in if $DEBUG;
+
+lives-ok {
+    $out = Zuy.from-xml($in);
+},"from-xml namespaced with namespaced contained positional";
+
+ok $out.things.elems, "got the elements";
+
+for ^$out.things.elems -> $i {
+    is $out.things[$i], $obj.things[$i], "got the right element";
+}
+
+class Zuz does XML::Class[xml-namespace => 'urn:zub', xml-namespace-prefix => 'z'] {
+            has Str @.things is xml-element('thing') is xml-namespace('urn:thing', 'th');
+}
+
+$obj = Zuz.new(things => <a b c d>);
+
+lives-ok {
+$in = $obj.to-xml();
+}, "to-xml namespaced with namespaced non-contained positional";
+
+
+
+diag $in if $DEBUG;
+
+lives-ok {
+    $out = Zuz.from-xml($in);
+},"from-xml namespaced with namespaced non-contained positional";
+
+ok $out.things.elems, "got the elements";
+
+for ^$out.things.elems -> $i {
+    is $out.things[$i], $obj.things[$i], "got the right element";
+}
+
 
 done-testing;
 
