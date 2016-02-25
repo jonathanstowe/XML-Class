@@ -336,6 +336,11 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     
     my subset PoA of Attribute where { $_ !~~ NodeX};
 
+    multi sub serialise(Bool $val, Attribute $a) {
+        my $str = $val ?? 'true' !! 'false';
+        serialise($str, $a);
+    }
+
     multi sub serialise(Cool $val, ElementX $a) {
         my $x = create-element($a);
         if $val.defined {
@@ -350,7 +355,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     my subset NoArray of Cool where * !~~ Positional|Associative;
 
-    multi sub serialise(NoArray $val, PoA $a) {
+    multi sub serialise(Str $val, PoA $a) {
         $val // '';
     }
 
@@ -439,9 +444,18 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         samewith($element, |c);
     }
 
-    multi sub deserialise(ElementWrapper $element, PoA $attribute, NoArray $obj, Str :$namespace) {
-        my $val = $element.attribs{$attribute.name.substr(2)};
+    multi sub deserialise-value($val, Attribute $attribute, Any $obj) {
         $obj($val);
+    }
+
+    multi sub deserialise-value($val, Attribute $attribute, Bool $) {
+        say "HERE";
+        ($val eq 'true' || $val eq '1' ) ?? True !! False;
+    }
+    multi sub deserialise(ElementWrapper $element, PoA $attribute, NoArray $obj, Str :$namespace) {
+        say ">>> ", $obj.WHAT;
+        my $val = $element.attribs{$attribute.name.substr(2)};
+        deserialise-value($val, $attribute, $obj);
     }
 
     multi sub deserialise(ElementWrapper $element, AttributeX $attribute, NoArray $obj, Str :$namespace) {
