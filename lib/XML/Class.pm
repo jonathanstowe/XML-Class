@@ -67,6 +67,14 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         has Str $.xml-namespace-prefix = $xml-namespace-prefix;
     }
 
+    # Just a stub as only used for signalling
+    my role SkipNullX does NodeX {
+    }
+
+    multi sub trait_mod:<is> (Attribute $a, :$xml-skip-null!) {
+        $a does SkipNullX;
+    }
+
     multi sub trait_mod:<is> (Attribute $a, :$xml-simple-content!) {
         $a does ContentX;
     }
@@ -190,8 +198,10 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             if $attribute.has_accessor {
                 my $name = self.make-name($attribute);
                 my $value = $val.defined ?? $attribute.get_value($val) !! $attribute.type;
-                my $values = serialise($value, $attribute);
-                self.add-value($name, $values);
+                if $attribute !~~ SkipNullX || $value.defined {
+                    my $values = serialise($value, $attribute);
+                    self.add-value($name, $values);
+                }
             }
         }
 
