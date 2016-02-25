@@ -115,5 +115,27 @@ lives-ok {
     my $x = MissingObjectContainer.from-xml('<?xml version="1.0"?><MissingObjectContainer />');
 }, "from-xml missing object element container";
 
+class MissingContent does XML::Class {
+    class Simple {
+        has Str $.lang;
+        has Str $.name is xml-simple-content;
+    }
+    has Simple $.name;
+}
+
+lives-ok {
+    my $x = MissingContent.new.to-xml;
+    diag $x if $DEBUG;
+}, "class with simple uninitialised (to-xml)";
+
+lives-ok {
+    my $x = MissingContent.from-xml('<?xml version="1.0"?><MissingContent><Simple lang=""/></MissingContent>');
+    diag $x.to-xml if $DEBUG;
+}, "from-xml simple content with no content";
+lives-ok {
+    my $x = MissingContent.from-xml('<?xml version="1.0"?><MissingContent  />');
+    diag $x.to-xml if $DEBUG;
+}, "from-xml simple content with no container";
+
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6

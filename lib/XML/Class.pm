@@ -438,8 +438,14 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     }
 
     multi sub serialise(Cool $val, ContentX $a) {
-        XML::Text.new(text => $val);
+        if $val.defined {
+            XML::Text.new(text => $val);
+        }
+        else {
+            Nil
+        }
     }
+
 
     multi sub serialise(Mu $val, Attribute $a, $xml-element?, $xml-namespace?, $xml-namespace-prefix? ) {
         my $name = $xml-element // $val.^shortname;
