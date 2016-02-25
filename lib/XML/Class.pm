@@ -71,18 +71,39 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     my role SkipNullX does NodeX {
     }
 
-    multi sub trait_mod:<is> (Attribute $a, :$xml-skip-null!) {
+    my role SerialiseX[&serialiser] {
+        has &.serialiser = &serialiser;
+        method serialise($value) {
+            self.serialiser.($value);
+        }
+    }
+
+    multi sub trait_mod:<is> (Attribute $a, :&xml-serialise!) is export {
+        $a does SerialiseX[&xml-serialise];
+    }
+
+    my role DeserialiseX[&deserialiser] {
+        has &.deserialiser = &deserialiser;
+        method deserialise($value) {
+            self.deserialiser.($value);
+        }
+    }
+
+    multi sub trait_mod:<is> (Attribute $a, :&xml-deserialise!) is export {
+        $a does DeserialiseX[&xml-deserialise];
+    }
+    multi sub trait_mod:<is> (Attribute $a, :$xml-skip-null!) is export {
         $a does SkipNullX;
     }
 
-    multi sub trait_mod:<is> (Attribute $a, :$xml-simple-content!) {
+    multi sub trait_mod:<is> (Attribute $a, :$xml-simple-content!) is export {
         $a does ContentX;
     }
 
-    multi sub trait_mod:<is> (Attribute $a, Str :$xml-namespace) {
+    multi sub trait_mod:<is> (Attribute $a, Str :$xml-namespace) is export {
         $a does NamespaceX[:$xml-namespace];
     }
-    multi sub trait_mod:<is> (Attribute $a, :$xml-namespace! (Str $namespace, $namespace-prefix?)) {
+    multi sub trait_mod:<is> (Attribute $a, :$xml-namespace! (Str $namespace, $namespace-prefix?)) is export {
         $a does NamespaceX[xml-namespace => $namespace, xml-namespace-prefix => $namespace-prefix];
     }
 
@@ -364,12 +385,18 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     # serialise should have the most specific type
     # first and then call the one with a specific
     # attribute with the string representation
+
+    multi sub serialise($val, SerialiseX $a) {
+        my $str = $a.serialise($val);
+        serialise($str, $a);
+    }
+
     multi sub serialise(Bool $val, Attribute $a) {
         my $str = $val ?? 'true' !! 'false';
         serialise($str, $a);
     }
 
-    multi sub serialise(Numeric $val, Attribute $a) {
+    multi sub serialise(Real $val, Attribute $a) {
         serialise($val.Str, $a);
     }
 
@@ -381,7 +408,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         serialise($val.Str, $a);
     }
 
-    multi sub serialise(Cool $val, ElementX $a) {
+    multi sub serialise(Str $val, ElementX $a) {
         my $x = create-element($a);
         if $val.defined {
             $x.insert(XML::Text.new(text => $val));
@@ -505,6 +532,12 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     my subset TypedNode of XML::Node where * ~~ XML::Text|ElementWrapper;
 
+    # This one implements "custom deserialisation"
+    multi sub deserialise(TypedNode $element, DeserialiseX $attribute, $obj, Str :$namespace) {
+        my $val = deserialise($element, $attribute, Str, :$namespace);
+        $attribute.deserialise($val);
+    }
+
     multi sub deserialise(TypedNode $element, Attribute $attribute, Bool $obj, Str :$namespace) {
         my $val = deserialise($element, $attribute, Str, :$namespace);
         ($val eq 'true' || $val eq '1' ) ?? True !! False;
@@ -520,7 +553,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         Date.new($val);
     }
 
-    multi sub deserialise(TypedNode $element, Attribute $attribute, Numeric $obj, Str :$namespace) {
+    multi sub deserialise(TypedNode $element, Attribute $attribute, Real $obj, Str :$namespace) {
         my $val = deserialise($element, $attribute, Str, :$namespace);
         $obj($val);
     }
