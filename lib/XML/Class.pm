@@ -15,6 +15,21 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $xml-namespace-prefix;
     }
 
+    # Exceptions can be used anywhere here
+    my class X::NoElement is Exception {
+        has Str $.element is required;
+        has Attribute $.attribute is required;
+        method message() {
+            if $.attribute.defined {
+                "Expected element '{ $!element }' not found for attribute '{ $!attribute.name.substr(2) }'";
+            }
+            else {
+                "Expected element '{ $!element }' not found";
+            }
+        }
+    }
+
+    # Roles applied by the traits
     my role NameX {
         has Str $.xml-name is rw;
         method xml-name() is rw returns Str {
@@ -336,9 +351,24 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     
     my subset PoA of Attribute where { $_ !~~ NodeX};
 
+    # serialise should have the most specific type
+    # first and then call the one with a specific
+    # attribute with the string representation
     multi sub serialise(Bool $val, Attribute $a) {
         my $str = $val ?? 'true' !! 'false';
         serialise($str, $a);
+    }
+
+    multi sub serialise(Numeric $val, Attribute $a) {
+        serialise($val.Str, $a);
+    }
+
+    multi sub serialise(DateTime $val, Attribute $a) {
+        serialise($val.Str, $a);
+    }
+
+    multi sub serialise(Date $val, Attribute $a) {
+        serialise($val.Str, $a);
     }
 
     multi sub serialise(Cool $val, ElementX $a) {
@@ -438,50 +468,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         deserialise($xml, $attribute, self, :outer);
     }
 
-    # Make sure we have all our helpers
-    multi sub deserialise(XML::Element $element where * !~~ ElementWrapper, |c) {
-        $element does ElementWrapper;
-        samewith($element, |c);
-    }
-
-    multi sub deserialise-value($val, Attribute $attribute, Any $obj) {
-        $obj($val);
-    }
-
-    multi sub deserialise-value($val, Attribute $attribute, Bool $) {
-        say "HERE";
-        ($val eq 'true' || $val eq '1' ) ?? True !! False;
-    }
-    multi sub deserialise(ElementWrapper $element, PoA $attribute, NoArray $obj, Str :$namespace) {
-        say ">>> ", $obj.WHAT;
-        my $val = $element.attribs{$attribute.name.substr(2)};
-        deserialise-value($val, $attribute, $obj);
-    }
-
-    multi sub deserialise(ElementWrapper $element, AttributeX $attribute, NoArray $obj, Str :$namespace) {
-        my $val = $element.attribs{$attribute.xml-name};
-        $obj($val);
-    }
-
-    multi sub deserialise(ElementWrapper $element, ElementX $attribute, NoArray $obj, Str :$namespace is copy) {
-        my $name = $attribute.xml-name;
-
-        if $attribute ~~ NamespaceX {
-            $namespace = $attribute.xml-namespace;
-        }
-
-        my $node = $element.find-child($name, $namespace);
-        $node.defined ?? $obj($node.firstChild.Str) !! $obj;
-    }
-
-    multi sub deserialise(ElementWrapper $element, ContentX $attribute, $obj, Str :$namespace) {
-        $obj($element.firstChild.Str);
-    }
-
-    multi sub deserialise(XML::Text $text, Attribute $attribute, $obj, Str :$namespace) {
-        $obj($text.Str);
-    }
-
+    # Helpers should be moved
     multi sub get-positional-name(Attribute $attribute, Cool $t, :$namespace) {
         $attribute ~~ ElementX ?? $attribute.xml-name !! $attribute.name.substr(2);
     }
@@ -489,6 +476,68 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     multi sub get-positional-name(Attribute $attribute, Mu $t, Str :$namespace) {
         $attribute ~~ ElementX ?? $attribute.xml-name !! $t ~~ XML::Class ?? $t.xml-element !! $t.^shortname;
     }
+    # Make sure we have all our helpers
+    multi sub deserialise(XML::Element $element where * !~~ ElementWrapper, |c) {
+        $element does ElementWrapper;
+        samewith($element, |c);
+    }
+
+
+    # For deserialise the most specific Attribute.type with the least specific type of Attribute
+    # for scalar, aggregate types will call deserialise on the parts.
+    # They also need to deal with either a Wrapped element or an XML::Text
+
+    my subset TypedNode of XML::Node where * ~~ XML::Text|ElementWrapper;
+
+    multi sub deserialise(TypedNode $element, Attribute $attribute, Bool $obj, Str :$namespace) {
+        my $val = deserialise($element, $attribute, Str, :$namespace);
+        ($val eq 'true' || $val eq '1' ) ?? True !! False;
+    }
+
+    multi sub deserialise(TypedNode $element, Attribute $attribute, DateTime $obj, Str :$namespace) {
+        my $val = deserialise($element, $attribute, Str, :$namespace);
+        DateTime.new($val);
+    }
+
+    multi sub deserialise(TypedNode $element, Attribute $attribute, Date $obj, Str :$namespace) {
+        my $val = deserialise($element, $attribute, Str, :$namespace);
+        Date.new($val);
+    }
+
+    multi sub deserialise(TypedNode $element, Attribute $attribute, Numeric $obj, Str :$namespace) {
+        my $val = deserialise($element, $attribute, Str, :$namespace);
+        $obj($val);
+    }
+
+    multi sub deserialise(ElementWrapper $element, PoA $attribute, Str $obj, Str :$namespace) {
+        my $val = $element.attribs{$attribute.name.substr(2)};
+        $val;
+    }
+
+    multi sub deserialise(ElementWrapper $element, AttributeX $attribute, Str $obj, Str :$namespace) {
+        my $val = $element.attribs{$attribute.xml-name};
+        $val;
+    }
+
+    multi sub deserialise(ElementWrapper $element, ElementX $attribute, Str $obj, Str :$namespace is copy) {
+        my $name = $attribute.xml-name;
+
+        if $attribute ~~ NamespaceX {
+            $namespace = $attribute.xml-namespace;
+        }
+
+        my $node = $element.find-child($name, $namespace);
+        $node.defined ?? $node.firstChild.Str !! $obj;
+    }
+
+    multi sub deserialise(ElementWrapper $element, ContentX $attribute, $obj, Str :$namespace) {
+        $element.firstChild.Str;
+    }
+
+    multi sub deserialise(XML::Text $text, Attribute $attribute, Str $obj, Str :$namespace) {
+        $text.Str;
+    }
+
 
     multi sub deserialise(ElementWrapper $element, Attribute $attribute, @obj, Str :$namespace is copy) {
         my @vals;
@@ -515,7 +564,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             my $name = $attribute.xml-name;
             my $c = $element.elements(TAG => $name, :SINGLE);
             for $c.nodes -> $node {
-                %vals{$node.name} = %obj.of.($node.firstChild.Str);
+                %vals{$node.name} = deserialise($node.firstChild, $attribute, %obj.of, :$namespace);
             }
         }
         else {
@@ -524,18 +573,6 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         %vals;
     }
 
-    my class X::NoElement is Exception {
-        has Str $.element is required;
-        has Attribute $.attribute is required;
-        method message() {
-            if $.attribute.defined {
-                "Expected element '{ $!element }' not found for attribute '{ $!attribute.name.substr(2) }'";
-            }
-            else {
-                "Expected element '{ $!element }' not found";
-            }
-        }
-    }
 
     multi sub deserialise(ElementWrapper $element is copy, Attribute $attribute, Mu $obj, Str :$namespace, Bool :$outer) {
 
