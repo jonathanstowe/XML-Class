@@ -590,7 +590,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     multi sub deserialise(ElementWrapper $element, Attribute $attribute, @obj, Str :$namespace is copy) {
         my @vals;
-        my $t = @obj.of;
+        my $t = @obj.of =:= Mu ?? Str !! @obj.of;
         my $name = get-positional-name($attribute, $t, :$namespace);
         if not $namespace.defined {
             $namespace = $t ~~ XML::Class ?? $t.xml-namespace !! $element.namespace;

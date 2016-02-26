@@ -159,19 +159,21 @@ class UnTypedArray does XML::Class {
     has @.untyped-element;
 }
 
-my $obj = UnTyped.new(untyped-element => (22/7));
-my $out;
+$obj = UnTypedArray.new(untyped-element => (22/7));
 lives-ok {
     $out = $obj.to-xml;
     diag $out if $DEBUG;
 }, "to-xml with class with untyped positional element with number";
 
-my $in;
 lives-ok {
-    $in = UnTyped.from-xml($out);
+    $in = UnTypedArray.from-xml($out);
 }, "from-xml untyped element with number";
 
 is $in.untyped-element[0], $obj.untyped-element[0], "and we at least got something sane back";
+
+class UnTypedInner {
+    has $.untyped-inner is xml-element;
+}
 
 
 
