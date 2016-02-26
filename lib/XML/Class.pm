@@ -78,15 +78,25 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
     }
 
-    multi sub trait_mod:<is> (Attribute $a, :&xml-serialise!) is export {
-        $a does SerialiseX[&xml-serialise];
-    }
-
     my role DeserialiseX[&deserialiser] {
         has &.deserialiser = &deserialiser;
         method deserialise($value) {
             self.deserialiser.($value);
         }
+    }
+
+    my %*NS-MAP;
+
+    # xml-any
+    my role AnyX {
+    }
+
+    multi sub trait_mod:<is> (Attribute $a, :$xml-any!) is export {
+        $a does AnyX;
+    }
+
+    multi sub trait_mod:<is> (Attribute $a, :&xml-serialise!) is export {
+        $a does SerialiseX[&xml-serialise];
     }
 
     multi sub trait_mod:<is> (Attribute $a, :&xml-deserialise!) is export {
