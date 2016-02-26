@@ -4,7 +4,7 @@ use v6;
 
 use Test;
 
-my Bool $DEBUG = True;
+my Bool $DEBUG;
 
 use XML::Class;
 
@@ -175,7 +175,32 @@ class UnTypedInner {
     has $.untyped-inner is xml-element;
 }
 
+$obj = UnTyped.new(untyped-element => UnTypedInner.new(untyped-inner => "inner"));
 
+lives-ok {
+    $out = $obj.to-xml;
+    diag $out if $DEBUG;
+}, "to-xml with class with untyped scalar element with object";
+
+lives-ok {
+    $in = UnTyped.from-xml($out);
+}, "from-xml untyped element with object";
+
+nok $in.untyped-element.defined, "didn't get anything back as expected (don't just stringy the element)";
+
+
+$obj = UnTypedArray.new(untyped-element => (UnTypedInner.new(untyped-inner => "inner")));
+
+lives-ok {
+    $out = $obj.to-xml;
+    diag $out if $DEBUG;
+}, "to-xml with class with untyped positional element with object";
+
+lives-ok {
+    $in = UnTypedArray.from-xml($out);
+}, "from-xml untyped element with object positional";
+
+is $in.untyped-element.elems, 0, "and didn't get any false data in there";
 
 
 done-testing;

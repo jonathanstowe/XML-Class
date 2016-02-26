@@ -576,7 +576,27 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
 
         my $node = $element.find-child($name, $namespace);
-        $node.defined ?? $node.firstChild.Str !! $obj;
+        my $ret = do if $node.defined {
+            my $child = $node.firstChild;
+            given $child {
+                when XML::Text {
+                    $child.Str;
+                }
+                when XML::CDATA {
+                    $child.data;
+                }
+                when XML::Element {
+                    Nil; # Almost certainly got here because it was an untyped attribute
+                }
+                default {
+                    $obj; # the element has no child;
+                }
+            }
+        }
+        else {
+            $obj;
+        }
+        $ret;
     }
 
     multi sub deserialise(ElementWrapper $element, ContentX $attribute, $obj, Str :$namespace) {
