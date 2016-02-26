@@ -607,10 +607,13 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $text.Str;
     }
 
+    multi sub derive-type(Mu $type is raw, ElementWrapper $e, Attribute $a) {
+        $type =:= Mu ?? Str !! $type;
+    }
 
     multi sub deserialise(ElementWrapper $element, Attribute $attribute, @obj, Str :$namespace is copy) {
         my @vals;
-        my $t = @obj.of =:= Mu ?? Str !! @obj.of;
+        my $t = derive-type(@obj.of, $element, $attribute);
         my $name = get-positional-name($attribute, $t, :$namespace);
         if not $namespace.defined {
             $namespace = $t ~~ XML::Class ?? $t.xml-namespace !! $element.namespace;
@@ -677,7 +680,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             my %args;
             for $obj.^attributes -> $attr {
                 my $attr-name = $attr.name.substr(2);
-                my $type = $attr.type =:= Mu ?? Str !! $attr.type;
+                my $type = derive-type($attr.type, $element, $attr);
                 %args{$attr-name} := deserialise($element, $attr, $type, namespace => $ns);
             }
             $ret = $obj.new(|%args);
