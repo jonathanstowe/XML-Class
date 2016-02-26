@@ -85,10 +85,14 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
     }
 
-    my %*NS-MAP;
-
     # xml-any
     my role AnyX {
+    }
+
+    # Dummy class to substitute for the actual type
+    # when we have an AnyX
+    my class XmlAny {
+
     }
 
     multi sub trait_mod:<is> (Attribute $a, :$xml-any!) is export {
@@ -301,6 +305,10 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             $node;
         }
 
+        method first-child() {
+            check-role(self.firstChild);
+        }
+
         # better find by namespace
         method find-child(Str $name, Str $ns?) {
             my $element = self.elements(TAG => $name, :SINGLE) || self.elements.map(&check-role).grep({ $_.local-name eq $name && $_.namespace eq $ns}).first;
@@ -319,10 +327,18 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             check-role( $attribute ~~ ElementX ?? self.firstChild !! self);
         }
 
-        method positional-children(Str $name, Attribute $attribute, Mu $t, Str :$namespace) {
+        multi method positional-children(Str $name, Attribute $attribute where * !~~ AnyX, Mu $t, Str :$namespace) {
             my @elements;
 
             for self.find-children($name, $namespace) -> $node {
+                @elements.append: $node.positional-element($attribute, $t);
+            }
+            @elements;
+        }
+
+        multi method positional-children(Str $name, AnyX $attribute, Mu $t, Str :$namespace ) {
+            my @elements;
+            for self.elements.map(&check-role) -> $node {
                 @elements.append: $node.positional-element($attribute, $t);
             }
             @elements;
@@ -518,12 +534,12 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         serialise(self, $attribute, $xml-element, $xml-namespace, $xml-namespace-prefix);
     }
 
-    multi method from-xml(XML::Class:U: Str $xml) returns XML::Class {
-        my $doc = XML::Document.new($xml);
+    multi method from-xml(XML::Class:U: Str $xml, |c) returns XML::Class {
+        my $doc = XML::Document.new($xml,|c);
         self.from-xml($doc);
     }
 
-    multi method from-xml(XML::Class:U: XML::Document:D $xml) returns XML::Class {
+    multi method from-xml(XML::Class:U: XML::Document:D $xml, |c) returns XML::Class {
         my $root = $xml.root;
         self.from-xml($root);
     }
@@ -589,6 +605,47 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $val;
     }
 
+    multi sub deserialise(ElementWrapper $element, ElementX $attribute, XmlAny $obj, Str :$namespace is copy) {
+        my $name = $attribute.xml-name;
+
+        if $attribute ~~ NamespaceX {
+            $namespace = $attribute.xml-namespace;
+        }
+
+        my $node = $element.find-child($name, $namespace);
+        my $ret = do if $node.defined {
+            my $child = $node.first-child;
+            given $child {
+                when XML::Text {
+                    $child.Str;
+                }
+                when XML::CDATA {
+                    $child.data;
+                }
+                when XML::Element {
+                    if $child.namespace -> $ns {
+                        if %*NS-MAP and %*NS-MAP{$ns}:exists {
+                            deserialise($child, $attribute, %*NS-MAP{$ns}, namespace => $ns);
+                        }
+                        else {
+                            Nil;
+                        }
+                    }
+                    else {
+                        Nil;
+                    }
+                }
+                default {
+                    $obj; # the element has no child;
+                }
+            }
+        }
+        else {
+            $obj;
+        }
+        $ret;
+    }
+
     multi sub deserialise(ElementWrapper $element, ElementX $attribute, Str $obj, Str :$namespace is copy) {
         my $name = $attribute.xml-name;
 
@@ -628,8 +685,12 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $text.Str;
     }
 
-    multi sub derive-type(Mu $type is raw, ElementWrapper $e, Attribute $a) {
+    multi sub derive-type(Mu $type is raw, ElementWrapper $e, Attribute $a where * !~~ AnyX) {
         $type =:= Mu ?? Str !! $type;
+    }
+
+    multi sub derive-type(Mu $type is raw, ElementWrapper $e, AnyX $a) {
+        $type =:= Mu ?? XmlAny !! $type;
     }
 
     multi sub deserialise(ElementWrapper $element, Attribute $attribute, @obj, Str :$namespace is copy) {
@@ -644,7 +705,16 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         if $e.defined {
             $namespace = $t ~~ XML::Class ?? $t.xml-namespace !! $attribute ~~ NamespaceX ?? $attribute.xml-namespace !! $e.namespace;
             for $e.positional-children($name, $attribute, $t, :$namespace) -> $node {
-                @vals.append:  deserialise($node, $attribute, $t, :$namespace);
+                if $t ~~ XmlAny {
+                    if $node.namespace -> $ns {
+                        if %*NS-MAP and %*NS-MAP{$ns}:exists {
+                            @vals.append: deserialise($node, $attribute, %*NS-MAP{$ns}, namespace => $ns);
+                        }
+                    }
+                }
+                else {
+                    @vals.append:  deserialise($node, $attribute, $t, :$namespace);
+                }
             }
         }
         @vals;
