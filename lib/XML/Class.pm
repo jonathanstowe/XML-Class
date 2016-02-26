@@ -486,14 +486,25 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     multi sub serialise(Mu $val, Attribute $a, $xml-element?, $xml-namespace?, $xml-namespace-prefix? ) {
         my $name = $xml-element // $val.^shortname;
-        my $xe = create-element($name, $xml-namespace, $xml-namespace-prefix);
-        for $val.^attributes -> $attribute {
-            $xe.add-object-attribute($val, $attribute);
+        my $ret;
+        # if it really isn't defined and we don't know what type it is skip it
+        if !(!$val.defined && $val.WHAT =:= Any ) {
+            my $xe = create-element($name, $xml-namespace, $xml-namespace-prefix);
+            for $val.^attributes -> $attribute {
+                $xe.add-object-attribute($val, $attribute);
+            }
+            # Add a wrapper if asked for
+            # the from-serialise is true when this was set by default
+            # in the Positional serialise.
+            $ret = $xe.add-wrapper($a);
         }
-        # Add a wrapper if asked for
-        # the from-serialise is true when this was set by default
-        # in the Positional serialise.
-        $xe.add-wrapper($a);
+        else {
+            # however we may want the container nonetheless
+            if $a.defined && $a ~~ ElementX && !$a.from-serialise {
+                $ret = create-element($a);
+            }
+        }
+        $ret;
     }
 
     multi method to-xml() returns Str {

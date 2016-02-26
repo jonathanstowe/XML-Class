@@ -202,6 +202,31 @@ lives-ok {
 
 is $in.untyped-element.elems, 0, "and didn't get any false data in there";
 
+class NoAny does XML::Class {
+    has $.head is xml-element('Head');
+}
+
+$obj = NoAny.new;
+lives-ok {
+    $out = $obj.to-xml(:document);
+    diag $out if $DEBUG;
+}, "to-xml of object with an uninitialised un-typed xml-element";
+
+nok $out.nodes[0].elements(TAG => 'Any'), "and we didn't get some bogus element";
+is  $out.nodes[0].elements.elems, 0, "and infact there are no elements there at all";
+
+class NoAnyArray does XML::Class {
+    has @.head is xml-container('Head');
+}
+
+$obj = NoAnyArray.new;
+lives-ok {
+    $out = $obj.to-xml(:document);
+    diag $out if $DEBUG;
+}, "to-xml of object with an uninitialised un-typed positional with xml-container";
+
+nok $out.nodes[0].elements(TAG => 'Any'), "and we didn't get some bogus element";
+is  $out.nodes[0].elements.elems, 0, "and infact there are no elements there at all";
 
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6
