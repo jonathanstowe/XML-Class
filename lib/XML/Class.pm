@@ -657,7 +657,8 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             my %args;
             for $obj.^attributes -> $attr {
                 my $attr-name = $attr.name.substr(2);
-                %args{$attr-name} := deserialise($element, $attr, $attr.type, namespace => $ns);
+                my $type = $attr.type =:= Mu ?? Str !! $attr.type;
+                %args{$attr-name} := deserialise($element, $attr, $type, namespace => $ns);
             }
             $ret = $obj.new(|%args);
         }

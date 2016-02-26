@@ -4,7 +4,7 @@ use v6;
 
 use Test;
 
-my Bool $DEBUG;
+my Bool $DEBUG = True;
 
 use XML::Class;
 
@@ -136,6 +136,45 @@ lives-ok {
     my $x = MissingContent.from-xml('<?xml version="1.0"?><MissingContent  />');
     diag $x.to-xml if $DEBUG;
 }, "from-xml simple content with no container";
+
+class UnTyped does XML::Class {
+    has $.untyped-element is xml-element;
+}
+
+my $obj = UnTyped.new(untyped-element => 22/7);
+my $out;
+lives-ok {
+    $out = $obj.to-xml;
+    diag $out if $DEBUG;
+}, "to-xml with class with untyped element with number";
+
+my $in;
+lives-ok {
+    $in = UnTyped.from-xml($out);
+}, "from-xml untyped element with number";
+
+is $in.untyped-element, $obj.untyped-element, "and we at least got something sane back";
+
+class UnTypedArray does XML::Class {
+    has @.untyped-element;
+}
+
+my $obj = UnTyped.new(untyped-element => (22/7));
+my $out;
+lives-ok {
+    $out = $obj.to-xml;
+    diag $out if $DEBUG;
+}, "to-xml with class with untyped positional element with number";
+
+my $in;
+lives-ok {
+    $in = UnTyped.from-xml($out);
+}, "from-xml untyped element with number";
+
+is $in.untyped-element[0], $obj.untyped-element[0], "and we at least got something sane back";
+
+
+
 
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6
