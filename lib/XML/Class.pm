@@ -354,7 +354,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
 
         method setNamespace($uri, $prefix?) {
-            callsame;
+            self.XML::Element::setNamespace($uri, $prefix);
             $!xml-namespace = $uri;
             if $prefix.defined {
                 $!xml-namespace-prefix = $prefix;
@@ -362,7 +362,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
 
         method name() is rw {
-            my $n = callsame;
+            my $n = self.XML::Element::name();
             if self.xml-namespace-prefix {
                 $n = self.xml-namespace-prefix ~ ':' ~ $n;
             }
@@ -534,12 +534,12 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         serialise(self, $attribute, $xml-element, $xml-namespace, $xml-namespace-prefix);
     }
 
-    multi method from-xml(XML::Class:U: Str $xml, |c) returns XML::Class {
-        my $doc = XML::Document.new($xml,|c);
+    multi method from-xml(XML::Class:U: Str $xml) returns XML::Class {
+        my $doc = XML::Document.new($xml);
         self.from-xml($doc);
     }
 
-    multi method from-xml(XML::Class:U: XML::Document:D $xml, |c) returns XML::Class {
+    multi method from-xml(XML::Class:U: XML::Document:D $xml) returns XML::Class {
         my $root = $xml.root;
         self.from-xml($root);
     }
@@ -557,9 +557,9 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $attribute ~~ ElementX ?? $attribute.xml-name !! $t ~~ XML::Class ?? $t.xml-element !! $t.^shortname;
     }
     # Make sure we have all our helpers
-    multi sub deserialise(XML::Element $element where * !~~ ElementWrapper, |c) {
+    multi sub deserialise(XML::Element $element where * !~~ ElementWrapper,|c) {
         $element does ElementWrapper;
-        samewith($element, |c);
+        deserialise($element, |c);
     }
 
 
@@ -751,14 +751,14 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
 
 
-        if $attribute ~~ ElementX && $element.name ne $name {
+        if $attribute ~~ ElementX and $element.name ne $name {
             my $name = $attribute.xml-name;
             $element = $element.find-child($name, $ns);
             if !$element && $outer {
                 X::NoElement.new(element => $name, attribute => $attribute).throw
             }
         }
-        if $element.defined && $element.name ne $name {
+        if $element.defined and $element.name ne $name {
             $element = $element.find-child($name, $ns);
             if !$element && $outer {
                 X::NoElement.new(element => $name, attribute => $attribute).throw
