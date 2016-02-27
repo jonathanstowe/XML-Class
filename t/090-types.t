@@ -12,6 +12,11 @@ class Test::Bool does XML::Class {
     has Bool $.element is xml-element;
 }
 
+lives-ok {
+    my $in = Test::Bool.new.to-xml;
+    my $out = Test::Bool.from-xml($in);
+}, "test for warnings on unitialised bools";
+
 my $obj = Test::Bool.new(attribute => True, element => True);
 
 my $out;
@@ -64,6 +69,16 @@ class Test::DateTime does XML::Class {
     has DateTime $.element is xml-element;
 }
 
+lives-ok {
+    CONTROL {
+        when CX::Warn {
+            die "GOT WARNING $_";
+        }
+    }
+    my $out = Test::DateTime.new.to-xml;
+    my $in  = Test::DateTime.from-xml($out);
+}, "test datetimes for warnings";
+
 my $d = DateTime.now;
 
 $obj = Test::DateTime.new(attribute => $d, element => $d);
@@ -90,6 +105,16 @@ class Test::Date does XML::Class {
     has Date $.attribute;
     has Date $.element is xml-element;
 }
+
+lives-ok {
+    CONTROL {
+        when CX::Warn {
+            die "GOT WARNING $_";
+        }
+    }
+    my $out = Test::Date.new.to-xml;
+    my $in  = Test::Date.from-xml($out);
+}, "test dates for warnings";
 
 $d = Date.today;
 
@@ -118,6 +143,15 @@ class Test::Int does XML::Class {
     has Int $.element is xml-element;
 }
 
+lives-ok {
+    CONTROL {
+        when CX::Warn {
+            die "GOT WARNING $_";
+        }
+    }
+    my $out = Test::Int.new.to-xml;
+    my $in  = Test::Int.from-xml($out);
+}, "test ints for warnings";
 
 $obj = Test::Int.new(attribute => 99, element => 99);
 
@@ -145,6 +179,15 @@ class Test::Rat does XML::Class {
     has Rat $.element is xml-element;
 }
 
+lives-ok {
+    CONTROL {
+        when CX::Warn {
+            die "GOT WARNING $_";
+        }
+    }
+    my $out = Test::Rat.new.to-xml;
+    my $in  = Test::Rat.from-xml($out);
+}, "test rat for warnings";
 
 $obj = Test::Rat.new(attribute => 99.47, element => 99.47);
 
@@ -171,6 +214,15 @@ class Test::Num does XML::Class {
     has Num $.element is xml-element;
 }
 
+lives-ok {
+    CONTROL {
+        when CX::Warn {
+            die "GOT WARNING $_";
+        }
+    }
+    my $out = Test::Num.new.to-xml;
+    my $in  = Test::Num.from-xml($out);
+}, "test num for warnings";
 
 $obj = Test::Num.new(attribute => Num(99.47), element => Num(99.47));
 

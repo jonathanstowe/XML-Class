@@ -423,15 +423,18 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     }
 
     multi sub serialise(Real $val, Attribute $a) {
-        serialise($val.Str, $a);
+        my $v = $val.defined ?? $val.Str !! '';
+        serialise($v, $a);
     }
 
     multi sub serialise(DateTime $val, Attribute $a) {
-        serialise($val.Str, $a);
+        my $v = $val.defined  ?? $val.Str !! '';
+        serialise($v, $a);
     }
 
     multi sub serialise(Date $val, Attribute $a) {
-        serialise($val.Str, $a);
+        my $v = $val.defined  ?? $val.Str !! '';
+        serialise($v, $a);
     }
 
     multi sub serialise(Str $val, ElementX $a) {
@@ -582,12 +585,14 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     multi sub deserialise(TypedNode $element, Attribute $attribute, DateTime $obj, Str :$namespace) {
         my $val = deserialise($element, $attribute, Str, :$namespace);
-        DateTime.new($val);
+        my DateTime $d = try DateTime.new($val);
+        $d;
     }
 
     multi sub deserialise(TypedNode $element, Attribute $attribute, Date $obj, Str :$namespace) {
         my $val = deserialise($element, $attribute, Str, :$namespace);
-        Date.new($val);
+        my Date $d = try Date.new($val);
+        $d;
     }
 
     multi sub deserialise(TypedNode $element, Attribute $attribute, Real $obj, Str :$namespace) {
