@@ -577,7 +577,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     multi sub deserialise(TypedNode $element, Attribute $attribute, Bool $obj, Str :$namespace) {
         my $val = deserialise($element, $attribute, Str, :$namespace);
-        ($val eq 'true' || $val eq '1' ) ?? True !! False;
+        $val.defined ?? ($val eq 'true' || $val eq '1' ) ?? True !! False !! False;
     }
 
     multi sub deserialise(TypedNode $element, Attribute $attribute, DateTime $obj, Str :$namespace) {
@@ -592,7 +592,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     multi sub deserialise(TypedNode $element, Attribute $attribute, Real $obj, Str :$namespace) {
         my $val = deserialise($element, $attribute, Str, :$namespace);
-        $obj($val);
+        $val.defined ?? $obj($val) !! $obj;
     }
 
     multi sub deserialise(ElementWrapper $element, PoA $attribute, Str $obj, Str :$namespace) {
