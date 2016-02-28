@@ -244,5 +244,47 @@ lives-ok {
 is $in.attribute, $obj.attribute, "attribute values match";
 is $in.element, $obj.element, "element values match";
 
+class Test::Subset does XML::Class {
+    subset Short of Str where *.chars < 100;
+    has Short $.attribute;
+    has Short $.element is xml-element;
+}
+
+$obj = Test::Subset.new(attribute => "short attribute", element => "short element");
+
+lives-ok { 
+    $out = $obj.to-xml(:element);
+}, "Subset types - to- xml";
+is $out<attribute>, $obj.attribute, "got the right thing in the output for an attribute";
+is $out[0][0].text, $obj.element, "got the right thing in the output for an element";
+
+lives-ok {
+    $in = Test::Subset.from-xml($out);
+}, "Subset types - from xml";
+
+is $in.attribute, $obj.attribute, "attribute values match";
+is $in.element, $obj.element, "element values match";
+
+class Test::SubsetInt does XML::Class {
+    subset Short of Int where * < 100;
+    has Short $.attribute;
+    has Short $.element is xml-element;
+}
+
+$obj = Test::SubsetInt.new(attribute => 50, element => 75);
+
+lives-ok { 
+    $out = $obj.to-xml(:element);
+}, "Subset types - to- xml";
+is $out<attribute>, "50", "got the right thing in the output for an attribute";
+is $out[0][0].text, "75", "got the right thing in the output for an element";
+
+lives-ok {
+    $in = Test::SubsetInt.from-xml($out);
+}, "Subset types - from xml";
+
+is $in.attribute, $obj.attribute, "attribute values match";
+is $in.element, $obj.element, "element values match";
+
 done-testing;
 # vim: expandtab shiftwidth=4 ft=perl6

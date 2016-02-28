@@ -1336,6 +1336,12 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $val.defined ?? ($val eq 'true' || $val eq '1' ) ?? True !! False !! False;
     }
 
+    
+    multi sub deserialise(TypedNode $element, Attribute $attribute, $obj where { $_.HOW ~~ Metamodel::SubsetHOW }, Str :$namespace) {
+        my $type = $obj.^refinee;
+        deserialise($element, $attribute, $type, :$namespace);
+    }
+
     multi sub deserialise(TypedNode $element, Attribute $attribute, DateTime $obj, Str :$namespace) {
         my $val = deserialise($element, $attribute, Str, :$namespace);
         my DateTime $d = try DateTime.new($val);
@@ -1348,7 +1354,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $d;
     }
 
-    multi sub deserialise(TypedNode $element, Attribute $attribute, Real $obj, Str :$namespace) {
+    multi sub deserialise(TypedNode $element, Attribute $attribute, Real $obj where { $_.HOW !~~ Metamodel::SubsetHOW }, Str :$namespace) {
         my $val = deserialise($element, $attribute, Str, :$namespace);
         $val.defined ?? $obj($val) !! $obj;
     }
