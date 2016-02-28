@@ -52,6 +52,8 @@ There are things that explicitly aren't catered for such as  "mixed content" (th
 where XML markup may be within text content as in XHTML for example,) but that shouldn't
 be a problem for data storage or messaging applications for the most part.  
 
+The full documentation is available as POD or as [Markdown](Documentation.md)
+
 ## Installation
 
 Assuming you have a working perl6 installation you should be able to
