@@ -13,7 +13,7 @@ class Payload does XML::Class[xml-namespace => 'urn:example.com/payload'] {
 }
 
 class Container does XML::Class {
-    has $.head is xml-element('Head');
+    has $.head is xml-element('Head') is xml-any;
     has $.body is xml-element('Body') is xml-any;
 }
 
