@@ -36,9 +36,9 @@ remain valid to the original description.
 This module aims to map between Perl 6 object attributes and XML by providing some default
 behaviours and some attribute traits to alter that behaviour to model the XML.
 
-By default scalar attributes who's value type can be expressed as an XML simple type (e.g.
+By default scalar attributes whose value type can be expressed as an XML simple type (e.g.
 strings, real numbers, boolean, datetimes) will be serialised as attribute values or (with
-an ```xml-element``` trait,) as elements with simple content.  positional attributes will
+an ```xml-element``` trait,) as elements with simple content.  Positional attributes will
 always be serialised as a sequence of elements (with an optional container specified by a
 trait,) likewise associative attributes (though the use of these is discouraged as there is
 no constraint on the names of the elements which are taken from the keys of the Hash.)
@@ -86,7 +86,7 @@ Other install mechanisms may be become available in the future.
 
 Although there are quite a few tests for this I'm sure they don't
 cover all the possible cases. So if you find something that isn't
-tested for an doesn't work quite as expected please let me know.
+tested for and doesn't work quite as expected please let me know.
 
 
 Suggestions/patches are welcomed via github at
