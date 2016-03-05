@@ -15,13 +15,13 @@
    "meta6" : "0",
    "excludes" : {},
    "build-depends" : [],
-   "source-url" : "git://github.com/jonathanstowe/JSON-Class.git",
+   "source-url" : "git://github.com/jonathanstowe/XML-Class.git",
    "supersedes" : {},
    "tags" : [ "XML", "object", "role", "framework" ],
    "depends" : [ "XML" ],
    "license" : "perl",
    "support" : {
-      "source" : "git://github.com/jonathanstowe/JSON-Class.git"
+      "source" : "git://github.com/jonathanstowe/XML-Class.git"
    },
    "resource" : {},
    "name" : "XML::Class"
