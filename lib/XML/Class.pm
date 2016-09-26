@@ -1151,7 +1151,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     }
 
     multi sub create-element(Str:D $name, Str $xml-namespace, $xml-namespace-prefix?) {
-        my $xe = self.create-element($name);
+        my $xe = create-element($name);
         if $xml-namespace.defined {
             $xe.setNamespace($xml-namespace, $xml-namespace-prefix);
         }
