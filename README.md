@@ -10,7 +10,7 @@ Role to Serialize/De-Serialize a Perl 6 class to/from XML
 
 use XML::Class;
 
-class Foo does XML::Class[xml-element => 'foo'] {
+class Foo does XML::Class[xml-element => 'foo', xml-namespace => "http://example.com/"] {
     has Int $.version = 0;
     has Str $.zub is xml-element;
 }
