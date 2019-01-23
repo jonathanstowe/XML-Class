@@ -930,7 +930,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         # These are for parsing, the above is for generating
         has Str $.local-name;
 
-        method local-name() {
+        method local-name( --> Str ) {
             if not $!local-name.defined {
                 if $.name.index(':') {
                     ( $!prefix, $!local-name) = $.name.split(':', 2);
@@ -945,7 +945,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         has Str $.prefix;
 
         # may not be a prefix but will always be a local-name
-        method prefix() {
+        method prefix( --> Str ) {
             if not $!local-name.defined {
                 my $ = self.local-name;
             }
@@ -981,13 +981,13 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             %!namespaces;
         }
 
-        method namespace() {
+        method namespace( --> Str ) {
             my $prefix = self.prefix // 'default';
-            self.namespaces{$prefix};
+            self.namespaces{$prefix} // Str;
         }
 
-        method prefix-for-namespace(Str:D $ns) {
-            self.namespaces.invert.hash{$ns};
+        method prefix-for-namespace(Str:D $ns --> Str ) {
+            self.namespaces.invert.hash{$ns} // Str;
         }
 
         method add-object-attribute(Mu $val, Attribute $attribute) {
@@ -1001,7 +1001,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             }
         }
 
-        method add-wrapper(Attribute $a) returns XML::Element {
+        method add-wrapper(Attribute $a --> XML::Element ) {
             my XML::Element $wrapped = self;
             if $a.defined && $a ~~ ElementX && !$a.from-serialise {
                 my $t = create-element($a);
@@ -1011,7 +1011,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             $wrapped;
         }
 
-        method make-name(Attribute $attribute) returns Str {
+        method make-name(Attribute $attribute --> Str )  {
             my $name =  do given $attribute {
                 when NameX {
                     $attribute.xml-name;
@@ -1051,18 +1051,18 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         multi sub check-role(Any:U) {
             Nil
         }
-        multi sub check-role(ElementWrapper $element) returns ElementWrapper {
+        multi sub check-role(ElementWrapper $element --> ElementWrapper ) {
             $element;
         }
 
-        multi sub check-role(XML::Element $element where * !~~ ElementWrapper ) returns ElementWrapper {
+        multi sub check-role(XML::Element $element where * !~~ ElementWrapper  --> ElementWrapper ) {
             if $element !~~ $?ROLE {
                 $element does $?ROLE;
             }
             $element
         }
 
-        multi sub check-role(XML::Text $node) {
+        multi sub check-role(XML::Text $node --> XML::Text) {
             $node;
         }
 
@@ -1122,7 +1122,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             }
         }
 
-        method name() is rw {
+        method name( --> Str ) is rw {
             my $n = self.XML::Element::name();
             if self.xml-namespace-prefix {
                 $n = self.xml-namespace-prefix ~ ':' ~ $n;
@@ -1131,7 +1131,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
     }
 
-    multi sub create-element(Attribute $a, Bool :$container) returns XML::Element {
+    multi sub create-element(Attribute $a, Bool :$container --> XML::Element ) {
         my $name = do if $container {
             $a.container-name;
         }
@@ -1152,7 +1152,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $x;
     }
 
-    multi sub create-element(Str:D $name, Any:U $?, Any:U $? ) returns XML::Element {
+    multi sub create-element(Str:D $name, Any:U $?, Any:U $? --> XML::Element ) {
         my $x = XML::Element.new(:$name);
         $x does ElementWrapper;
         $x;
@@ -1291,28 +1291,28 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $ret;
     }
 
-    multi method to-xml() returns Str {
+    multi method to-xml( --> Str ) {
         self.to-xml(:document).Str;
     }
-    multi method to-xml(:$document!) returns XML::Document {
+    multi method to-xml(:$document! --> XML::Document )  {
         my $xe = self.to-xml(:element);
         XML::Document.new($xe);
     }
-    multi method to-xml(:$element!, Attribute :$attribute) returns XML::Element {
+    multi method to-xml(:$element!, Attribute :$attribute --> XML::Element ) {
         serialise(self, $attribute, $xml-element, $xml-namespace, $xml-namespace-prefix);
     }
 
-    multi method from-xml(XML::Class:U: Str $xml) returns XML::Class {
+    multi method from-xml(XML::Class:U: Str $xml --> XML::Class ) {
         my $doc = XML::Document.new($xml);
         self.from-xml($doc);
     }
 
-    multi method from-xml(XML::Class:U: XML::Document:D $xml) returns XML::Class {
+    multi method from-xml(XML::Class:U: XML::Document:D $xml --> XML::Class ) {
         my $root = $xml.root;
         self.from-xml($root);
     }
 
-    multi method from-xml(XML::Class:U: XML::Element:D $xml, Attribute :$attribute) returns XML::Class {
+    multi method from-xml(XML::Class:U: XML::Element:D $xml, Attribute :$attribute --> XML::Class ) {
         deserialise($xml, $attribute, self, :outer);
     }
 
