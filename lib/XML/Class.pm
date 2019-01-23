@@ -824,6 +824,9 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     my role SkipNullX does NodeX {
     }
 
+    my role SkipX does NodeX {
+    }
+    
     my role SerialiseX[&serialiser] {
         has &.serialiser = &serialiser;
         method serialise($value) {
@@ -859,8 +862,13 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
     multi sub trait_mod:<is> (Attribute $a, :&xml-deserialise!) is export {
         $a does DeserialiseX[&xml-deserialise];
     }
+
     multi sub trait_mod:<is> (Attribute $a, :$xml-skip-null!) is export {
         $a does SkipNullX;
+    }
+
+    multi sub trait_mod:<is> (Attribute $a, :$xml-skip!) is export {
+        $a does SkipX;
     }
 
     multi sub trait_mod:<is> (Attribute $a, :$xml-simple-content!) is export {
@@ -986,7 +994,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             if $attribute.has_accessor {
                 my $name = self.make-name($attribute);
                 my $value = $val.defined ?? $attribute.get_value($val) !! $attribute.type;
-                if $attribute !~~ SkipNullX || $value.defined {
+                if $attribute !~~ SkipX  && ( $attribute !~~ SkipNullX || $value.defined ) {
                     my $values = serialise($value, $attribute);
                     self.add-value($name, $values);
                 }
