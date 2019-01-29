@@ -85,9 +85,7 @@ cover all the possible cases. So if you find something that isn't
 tested for and doesn't work quite as expected please let me know.
 
 
-Suggestions/patches are welcomed via github at
-
-https://github.com/jonathanstowe/XML-Class
+Suggestions/patches are welcomed via [github](https://github.com/jonathanstowe/XML-Class)
 
 ## Licence
 
@@ -95,4 +93,4 @@ This is free software.
 
 Please see the [LICENCE](LICENCE) file in the distribution
 
-© Jonathan Stowe 2016, 2017
+© Jonathan Stowe 2016 - 2019
