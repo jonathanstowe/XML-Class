@@ -216,7 +216,7 @@ ASSOCIATIVE ATTRIBUTES
 Associative (or Hash,) attributes (that is those declared with the `%.` sigil,) will produce XML such that a container element is produced with the name of the attribute with a sequence of elements named after the keys of the hash:
 
     class Foo::Bar does XML::Class {
-	    has %.bars = (a => 1, b => 2);
+        has %.bars = (a => 1, b => 2);
 
     }
 
@@ -232,7 +232,7 @@ Will produce the XML:
 The name of the containing element can be set with the `xml-element` trait:
 
     class Foo::Bar does XML::Class {
-	    has %.bars is xml-element('Bars') = (a => 1, b => 2);
+        has %.bars is xml-element('Bars') = (a => 1, b => 2);
 
     }
 
@@ -255,11 +255,11 @@ CLASS TYPED ATTRIBUTES
 A class typed attribute will be serialised to XML according to the rules described above for its own attributes such that it forms an element of complex content with the name derived from the shortname of the class. So the following:
 
     class Foo does XML::Class {
-	    class Bar {
-		    has Str $.attribute = "thing";
-		    has Int $.element is xml-element  = 10;
-	    }
-	    has Bar $.bar = Bar.new;
+        class Bar {
+            has Str $.attribute = "thing";
+            has Int $.element is xml-element  = 10;
+        }
+        has Bar $.bar = Bar.new;
     }
 
 Will emit XML like:
@@ -273,11 +273,11 @@ Will emit XML like:
 The same rule applies to positional attributes typed to a class:
 
     class Foo does XML::Class {
-	    class Bar {
-		    has Str $.attribute = "thing";
-		    has Int $.element is xml-element  = 10;
-	    }
-	    has Bar @.bar = (Bar.new(attribute => "something", element => 42), Bar.new(attribute => "else", element => 666));
+        class Bar {
+            has Str $.attribute = "thing";
+            has Int $.element is xml-element  = 10;
+        }
+        has Bar @.bar = (Bar.new(attribute => "something", element => 42), Bar.new(attribute => "else", element => 666));
     }
 
 Will give you:
@@ -296,11 +296,11 @@ As with positionals of simple types the `xml-container` trait allows the sequenc
 If you wish to have an additional enclosing element for a single object then the `xml-element` trait can be applied:
 
     class Foo does XML::Class {
-	    class Bar {
-		    has Str $.attribute = "thing";
-		    has Int $.element is xml-element  = 10;
-	    }
-	    has Bar $.bar is xml-element('Inner') = Bar.new;
+        class Bar {
+            has Str $.attribute = "thing";
+            has Int $.element is xml-element  = 10;
+        }
+        has Bar $.bar is xml-element('Inner') = Bar.new;
     }
 
 Giving:
@@ -313,14 +313,36 @@ Giving:
         </Inner>
     </Foo>
 
+Alternatively, if you wish to simply over-ride the name of the outer element of the "complex type" then you can supply the `:over-ride` adverb to the `xml-element` trait:
+
+    class Foo does XML::Class {
+        class Bar {
+            has Str $.attribute = "thing";
+            has Int $.element is xml-element  = 10;
+        }
+        has Bar $.bar is xml-element('Inner', :over-ride) = Bar.new;
+    }
+
+Which would give:
+
+    <Foo>
+        <Inner attribute="thing">
+            <element>10</element>
+        </Inner>
+    </Foo>
+
+If the name is omitted from the `xml-element` then the element name will be derived from that of the attribute.
+
+This is particularly useful where an XSD complexType is used to define multiple differently named elements in a schema which can be defined as a single class that can be re-used in multiple places.
+
 If the class of the attribute itself does [XML::Class](XML::Class) then any `xml-element`, `xml-namespace` and `xml-namespace-prefix` will be used:
 
     class Foo does XML::Class {
-	    class Bar does XML::Class[xml-element => 'Thing', xml-namespace => 'urn:things', xml-namespace-prefix => 'th'] {
-		    has Str $.attribute = "thing";
-		    has Int $.element is xml-element  = 10;
-	    }
-	    has Bar $.bar = Bar.new;
+        class Bar does XML::Class[xml-element => 'Thing', xml-namespace => 'urn:things', xml-namespace-prefix => 'th'] {
+            has Str $.attribute = "thing";
+            has Int $.element is xml-element  = 10;
+        }
+        has Bar $.bar = Bar.new;
     }
 
 Results in:
@@ -336,10 +358,10 @@ The class can, of course, be defined anywhere you see fit, it need not be within
 As alluded to above in the description of positional attributes it is entirely possible to represent the "sequence with container element" as a class with a single positional attribute:
 
     class Foo does XML::Class {
-	    class Things {
-		    has Str @.things is xml-element('Thing')  = <a b>;
-	    }
-	    has Things $.bar = Things.new;
+        class Things {
+            has Str @.things is xml-element('Thing')  = <a b>;
+        }
+        has Things $.bar = Things.new;
 
     }
 
@@ -354,11 +376,11 @@ A common structure in XML is an element with one or more attributes as well as t
 Which can be expressed as a class with an attribute with the `xml-simple-content` trait:
 
     class Foo does XML::Class {
-	    class Name {
-		    has Str $.lang = 'en';
-		    has Str $.name is xml-simple-content = 'Foo';
-	    }
-	    has Name $.bar = Name.new;
+        class Name {
+            has Str $.lang = 'en';
+            has Str $.name is xml-simple-content = 'Foo';
+        }
+        has Name $.bar = Name.new;
     }
 
 Obviously this is reversible.
@@ -371,7 +393,7 @@ XML NAMESPACES
 As well as applying xml namespaces as parameters to the XML::Class role they can be applied on a per-element basis (possibly over-riding any effective namespace,) with the `xml-namespace` trait, currently namespaced XML attributes aren't supported.
 
     class Foo does XML::Class {
-	    has Str $.bar is xml-element is xml-namespace('urn:bar','b') = "thing";
+        has Str $.bar is xml-element is xml-namespace('urn:bar','b') = "thing";
     }
 
 Will give you:
@@ -385,7 +407,7 @@ The second, prefix, parameter to the trait is optional and if omitted the suppli
 This can be applied in combination with most other traits and attribute types, for example:
 
     class Foo does XML::Class {
-	    has Str @.bar is xml-container('Bars') is xml-element is xml-namespace('urn:bar','b') = <a b c>;
+        has Str @.bar is xml-container('Bars') is xml-element is xml-namespace('urn:bar','b') = <a b c>;
     }
 
 Will give you
@@ -401,7 +423,7 @@ Will give you
 And, as alluded to in the discussion of associative parameters above, namespaces can be applied to a hash as:
 
     class Foo does XML::Class {
-	    has %.bars is xml-element('Bars') is xml-namespace('urn:my-bars', 'ba') = (a => 1, b => 2);
+        has %.bars is xml-element('Bars') is xml-namespace('urn:my-bars', 'ba') = (a => 1, b => 2);
     }
 
 To give you:
@@ -488,4 +510,5 @@ The only constraint on the code supplied for the traits is that for the serialis
 OMITTING EMPTY VALUES
 ---------------------
 
-By default an uninitialised attribute will give rise to an XML attribute with the empty string as a value or an empty XML element, for many  applications this should be fine, however if a peer application requires a value to be defined or has some constraint if the element or attribute is present then the `xml-skip-null` trait can be applied which will cause the element or attribute to not be emitted at all if the Perl 6 attribute is not a defined value.
+By default an uninitialised attribute will give rise to an XML attribute with the empty string as a value or an empty XML element, for many applications this should be fine, however if a peer application requires a value to be defined or has some constraint if the element or attribute is present then the `xml-skip-null` trait can be applied which will cause the element or attribute to not be emitted at all if the Perl 6 attribute is not a defined value.
+

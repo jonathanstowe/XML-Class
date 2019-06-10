@@ -1,29 +1,14 @@
 {
-  "type": "layout",
   "children": [
     {
+      "name": "META6.json",
+      "type": "file"
+    },
+    {
+      "name": "t",
       "children": [
         {
-          "purpose": null,
-          "type": "directory",
-          "children": [
-            {
-              "type": "file",
-              "name": "country.xml"
-            }
-          ],
-          "name": "data"
-        },
-        {
-          "type": "file",
-          "name": "020-basic-out.t"
-        },
-        {
-          "name": "030-namespace-out.t",
-          "type": "file"
-        },
-        {
-          "name": "040-basic-in.t",
+          "name": "110-custom.t",
           "type": "file"
         },
         {
@@ -31,47 +16,70 @@
           "name": "120-any.t"
         },
         {
-          "name": "090-types.t",
+          "name": "040-basic-in.t",
+          "type": "file"
+        },
+        {
+          "name": "020-basic-out.t",
+          "type": "file"
+        },
+        {
+          "name": "100-skip-null.t",
           "type": "file"
         },
         {
           "type": "file",
-          "name": "001-meta.t"
-        },
-        {
-          "name": "065-country.t",
-          "type": "file"
-        },
-        {
-          "children": [
-            {
-              "name": "Country.pm",
-              "type": "file"
-            }
-          ],
-          "name": "lib",
-          "purpose": null,
-          "type": "directory"
+          "name": "090-types.t"
         },
         {
           "type": "file",
-          "name": "110-custom.t"
+          "name": "010-use.t"
         },
         {
           "type": "file",
           "name": "060-simple-content.t"
         },
         {
-          "name": "010-use.t",
+          "name": "130-issue-3.t",
+          "type": "file"
+        },
+        {
+          "children": [
+            {
+              "type": "file",
+              "name": "country.xml"
+            }
+          ],
+          "purpose": null,
+          "type": "directory",
+          "name": "data"
+        },
+        {
+          "purpose": null,
+          "children": [
+            {
+              "name": "Region.pm",
+              "type": "file"
+            },
+            {
+              "name": "Country.pm",
+              "type": "file"
+            }
+          ],
+          "type": "directory",
+          "name": "lib"
+        },
+        {
+          "name": "050-class-in.t",
+          "type": "file"
+        },
+        {
+          "name": "001-meta.t",
           "type": "file"
         },
         {
           "type": "file",
-          "name": "050-class-in.t"
-        },
-        {
-          "type": "file",
-          "name": "100-skip-null.t"
+          "name": "030-namespace-out.t"
         },
         {
           "name": "070-namespace-in.t",
@@ -80,45 +88,45 @@
         {
           "name": "080-failures.t",
           "type": "file"
+        },
+        {
+          "type": "file",
+          "name": "065-country.t"
         }
       ],
-      "name": "t",
       "purpose": null,
       "type": "directory"
     },
     {
-      "type": "file",
-      "name": "README.md"
-    },
-    {
-      "name": "Documentation.md",
+      "name": "Changes",
       "type": "file"
     },
     {
+      "name": "README.md",
+      "type": "file"
+    },
+    {
+      "name": "lib",
       "purpose": null,
-      "type": "directory",
       "children": [
         {
           "name": "XML",
+          "type": "directory",
+          "purpose": null,
           "children": [
             {
               "type": "file",
               "name": "Class.pm"
             }
-          ],
-          "type": "directory",
-          "purpose": null
+          ]
         }
       ],
-      "name": "lib"
+      "type": "directory"
     },
     {
       "type": "file",
-      "name": "META6.json"
-    },
-    {
-      "name": "Changes",
-      "type": "file"
+      "name": "Documentation.md"
     }
-  ]
+  ],
+  "type": "layout"
 }

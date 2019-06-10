@@ -344,7 +344,7 @@ keys of the hash:
 =begin code
 
 class Foo::Bar does XML::Class {
-	has %.bars = (a => 1, b => 2);
+    has %.bars = (a => 1, b => 2);
 
 }
 
@@ -369,7 +369,7 @@ trait:
 =begin code
 
 class Foo::Bar does XML::Class {
-	has %.bars is xml-element('Bars') = (a => 1, b => 2);
+    has %.bars is xml-element('Bars') = (a => 1, b => 2);
 
 }
 
@@ -408,11 +408,11 @@ So the following:
 =begin code
 
 class Foo does XML::Class {
-	class Bar {
-		has Str $.attribute = "thing";
-		has Int $.element is xml-element  = 10;
-	}
-	has Bar $.bar = Bar.new;
+    class Bar {
+        has Str $.attribute = "thing";
+        has Int $.element is xml-element  = 10;
+    }
+    has Bar $.bar = Bar.new;
 }
 
 =end code
@@ -431,11 +431,11 @@ The same rule applies to positional attributes typed to a class:
 
 =begin code
 class Foo does XML::Class {
-	class Bar {
-		has Str $.attribute = "thing";
-		has Int $.element is xml-element  = 10;
-	}
-	has Bar @.bar = (Bar.new(attribute => "something", element => 42), Bar.new(attribute => "else", element => 666));
+    class Bar {
+        has Str $.attribute = "thing";
+        has Int $.element is xml-element  = 10;
+    }
+    has Bar @.bar = (Bar.new(attribute => "something", element => 42), Bar.new(attribute => "else", element => 666));
 }
 =end code
 
@@ -460,11 +460,11 @@ then the C<xml-element> trait can be applied:
 
 =begin code
 class Foo does XML::Class {
-	class Bar {
-		has Str $.attribute = "thing";
-		has Int $.element is xml-element  = 10;
-	}
-	has Bar $.bar is xml-element('Inner') = Bar.new;
+    class Bar {
+        has Str $.attribute = "thing";
+        has Int $.element is xml-element  = 10;
+    }
+    has Bar $.bar is xml-element('Inner') = Bar.new;
 }
 =end code
 
@@ -480,16 +480,47 @@ Giving:
 </Foo>
 =end code
 
+Alternatively, if you wish to simply over-ride the name of the outer
+element of the "complex type" then you can supply the C<:over-ride>
+adverb to the C<xml-element> trait:
+
+=begin code
+class Foo does XML::Class {
+    class Bar {
+        has Str $.attribute = "thing";
+        has Int $.element is xml-element  = 10;
+    }
+    has Bar $.bar is xml-element('Inner', :over-ride) = Bar.new;
+}
+=end code
+
+Which would give:
+
+=begin code
+<Foo>
+    <Inner attribute="thing">
+        <element>10</element>
+    </Inner>
+</Foo>
+=end code
+
+If the name is omitted from the C<xml-element> then the element name
+will be derived from that of the attribute.
+
+This is particularly useful where an XSD complexType is used to define
+multiple differently named elements in a schema which can be defined
+as a single class that can be re-used in multiple places.
+
 If the class of the attribute itself does L<XML::Class> then any
 C<xml-element>, C<xml-namespace> and C<xml-namespace-prefix> will be used:
 
 =begin code
 class Foo does XML::Class {
-	class Bar does XML::Class[xml-element => 'Thing', xml-namespace => 'urn:things', xml-namespace-prefix => 'th'] {
-		has Str $.attribute = "thing";
-		has Int $.element is xml-element  = 10;
-	}
-	has Bar $.bar = Bar.new;
+    class Bar does XML::Class[xml-element => 'Thing', xml-namespace => 'urn:things', xml-namespace-prefix => 'th'] {
+        has Str $.attribute = "thing";
+        has Int $.element is xml-element  = 10;
+    }
+    has Bar $.bar = Bar.new;
 }
 =end code
 
@@ -512,11 +543,11 @@ as a class with a single positional attribute:
 
 =begin code
 class Foo does XML::Class {
-	class Things {
-		has Str @.things is xml-element('Thing')  = <a b>;
-	}
-	has Things $.bar = Things.new;
-	
+    class Things {
+        has Str @.things is xml-element('Thing')  = <a b>;
+    }
+    has Things $.bar = Things.new;
+
 }
 =end code
 
@@ -539,11 +570,11 @@ C<xml-simple-content> trait:
 
 =begin code
 class Foo does XML::Class {
-	class Name {
-		has Str $.lang = 'en';
-		has Str $.name is xml-simple-content = 'Foo';
-	}
-	has Name $.bar = Name.new;
+    class Name {
+        has Str $.lang = 'en';
+        has Str $.name is xml-simple-content = 'Foo';
+    }
+    has Name $.bar = Name.new;
 }
 =end code
 
@@ -561,7 +592,7 @@ namespaced XML attributes aren't supported.
 
 =begin code
 class Foo does XML::Class {
-	has Str $.bar is xml-element is xml-namespace('urn:bar','b') = "thing";
+    has Str $.bar is xml-element is xml-namespace('urn:bar','b') = "thing";
 }
 =end code
 
@@ -581,7 +612,7 @@ types, for example:
 
 =begin code
 class Foo does XML::Class {
-	has Str @.bar is xml-container('Bars') is xml-element is xml-namespace('urn:bar','b') = <a b c>;
+    has Str @.bar is xml-container('Bars') is xml-element is xml-namespace('urn:bar','b') = <a b c>;
 }
 =end code
 
@@ -602,7 +633,7 @@ namespaces can be applied to a hash as:
 
 =begin code
 class Foo does XML::Class {
-	has %.bars is xml-element('Bars') is xml-namespace('urn:my-bars', 'ba') = (a => 1, b => 2);
+    has %.bars is xml-element('Bars') is xml-namespace('urn:my-bars', 'ba') = (a => 1, b => 2);
 }
 =end code
 
@@ -744,7 +775,7 @@ attribute or element,) and return an object of the appropriate type.
 =head2 OMITTING EMPTY VALUES
 
 By default an uninitialised attribute will give rise to an XML attribute
-with the empty string as a value or an empty XML element, for many 
+with the empty string as a value or an empty XML element, for many
 applications this should be fine, however if a peer application
 requires a value to be defined or has some constraint if the element
 or attribute is present then the C<xml-skip-null> trait can be applied
@@ -799,7 +830,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     my role ElementX[Bool :$from-serialise] does NodeX does NameX {
         has Bool $.from-serialise = $from-serialise;
-
+        has Bool $.over-ride-name is rw;
     }
 
     my role ContainerX does NodeX {
@@ -826,7 +857,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     my role SkipX does NodeX {
     }
-    
+
     my role SerialiseX[&serialiser] {
         has &.serialiser = &serialiser;
         method serialise($value) {
@@ -898,12 +929,25 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $a.xml-name = $xml-attribute;
     }
 
-    multi sub trait_mod:<is> (Attribute $a, Bool :$xml-element!) is export {
+    multi sub trait_mod:<is> (Attribute $a, Bool :$xml-element!  ) is export {
         $a does ElementX;
     }
+
+    multi sub trait_mod:<is> (Attribute $a, Pair :$xml-element! where *.key eq 'over-ride'  ) is export {
+        $a does ElementX;
+        $a.over-ride-name = True;
+    }
+
+
     multi sub trait_mod:<is> (Attribute $a, Str:D :$xml-element!) is export {
         $a does ElementX;
         $a.xml-name = $xml-element;
+    }
+
+    multi sub trait_mod:<is> (Attribute $a, :$xml-element! (Str:D $name, :$over-ride! )) is export {
+        $a does ElementX;
+        $a.xml-name = $name;
+        $a.over-ride-name = True;
     }
 
     sub apply-namespace(Attribute $attribute) {
@@ -957,12 +1001,12 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
         method local-namespaces() {
             sub map-ns(Pair $p) {
-                my $key = do if $p.key.index(':') { 
-                        $p.key.split(':')[1] 
-                } 
-                else { 
+                my $key = do if $p.key.index(':') {
+                        $p.key.split(':')[1]
+                }
+                else {
                     'default'
-                }; 
+                };
                 $key => $p.value;
             }
             self.attribs.pairs.grep( { $_.key.starts-with('xmlns') }).map(&map-ns).hash;
@@ -1004,9 +1048,16 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         method add-wrapper(Attribute $a --> XML::Element ) {
             my XML::Element $wrapped = self;
             if $a.defined && $a ~~ ElementX && !$a.from-serialise {
-                my $t = create-element($a);
-                $t.insert(self);
-                $wrapped = $t;
+                # If :over-ride was set on the xml-element then just use the local name
+                # rather than actually add the wrapper
+                if $a.over-ride-name {
+                    $wrapped.name = $a.xml-name;
+                }
+                else {
+                    my $t = create-element($a);
+                    $t.insert(self);
+                    $wrapped = $t;
+                }
             }
             $wrapped;
         }
@@ -1085,7 +1136,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         }
 
         multi method positional-element(Attribute $attribute, Mu $t) {
-            check-role( $attribute ~~ ElementX ?? self.firstChild !! self);
+            check-role( $attribute ~~ ElementX ?? $attribute.?over-ride-name ?? self !! self.firstChild !! self);
         }
 
         multi method positional-children(Str $name, Attribute $attribute where * !~~ AnyX, Mu $t, Str :$namespace) {
@@ -1110,7 +1161,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
             if !$namespace.defined || $attribute ~~ NamespaceX {
                 $namespace = $attribute ~~ NamespaceX ?? $attribute.xml-namespace !! self.namespace;
             }
-            
+
             check-role($attribute ~~ ContainerX ?? self.find-child($attribute.container-name, $namespace) !! self);
         }
 
@@ -1166,14 +1217,14 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $xe;
     }
 
-    
+
     my subset PoA of Attribute where { $_ !~~ NodeX};
 
     # serialise should have the most specific type
     # first and then call the one with a specific
     # attribute with the string representation
 
-    
+
     multi sub serialise($val, SerialiseX $a) {
         my $str = $a.serialise($val);
         serialise($str, $a);
@@ -1269,7 +1320,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
 
     multi sub serialise(Mu $val, Attribute $a, $xml-element?, $xml-namespace?, $xml-namespace-prefix? ) {
-        my $name = $xml-element // $val.^shortname;
+        my $name = $xml-element // ( $a.?over-ride-name ?? $a.xml-name !! $val.^shortname );
         my $ret;
         # if it really isn't defined and we don't know what type it is skip it
         if !(!$val.defined && $val.WHAT =:= Any ) {
@@ -1318,11 +1369,13 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     # Helpers should be moved
     multi sub get-positional-name(Attribute $attribute, Cool $t, :$namespace) {
-        $attribute ~~ ElementX ?? $attribute.xml-name !! $attribute.name.substr(2);
+        my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! $attribute.name.substr(2);
+        $name;
     }
 
     multi sub get-positional-name(Attribute $attribute, Mu $t, Str :$namespace) {
-        $attribute ~~ ElementX ?? $attribute.xml-name !! $t ~~ XML::Class ?? $t.xml-element !! $t.^shortname;
+        my $name = $attribute ~~ ElementX ?? $attribute.xml-name !! $t ~~ XML::Class ?? $t.xml-element !! $t.^shortname;
+        $name;
     }
     # Make sure we have all our helpers
     multi sub deserialise(XML::Element $element where * !~~ ElementWrapper,|c) {
@@ -1350,7 +1403,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
         $val.defined ?? ($val eq 'true' || $val eq '1' ) ?? True !! False !! False;
     }
 
-    
+
     multi sub deserialise(TypedNode $element, SoA $attribute, $obj where { $_.HOW ~~ Metamodel::SubsetHOW }, Str :$namespace) {
         my $type = $obj.^refinee;
         deserialise($element, $attribute, $type, :$namespace);
@@ -1426,6 +1479,7 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     multi sub deserialise(ElementWrapper $element, ElementX $attribute, Str $obj, Str :$namespace is copy) {
         my $name = $attribute.xml-name;
+
 
         if $attribute ~~ NamespaceX {
             $namespace = $attribute.xml-namespace;
@@ -1517,7 +1571,9 @@ role XML::Class[Str :$xml-namespace, Str :$xml-namespace-prefix, Str :$xml-eleme
 
     multi sub deserialise(ElementWrapper $element is copy, Attribute $attribute, Mu $obj, Str :$namespace, Bool :$outer) {
 
-        my $name = $obj ~~ XML::Class ?? $obj.xml-element !! $obj.^shortname;
+        my $name = $attribute.?over-ride-name ?? $attribute.xml-name !! $obj ~~ XML::Class ?? $obj.xml-element !! $obj.^shortname;
+
+
 
         my Str $ns = $obj ~~ XML::Class ?? $obj.xml-namespace // $namespace !! $namespace;
 
