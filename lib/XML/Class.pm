@@ -782,6 +782,28 @@ or attribute is present then the C<xml-skip-null> trait can be applied
 which will cause the element or attribute to not be emitted at all
 if the Perl 6 attribute is not a defined value.
 
+=head2 OMITTING ATTRIBUTES 
+
+If you would like to omit an attribute from XML serialization/deserialization, 
+then you can use the C<xml-skip> trait to do so. 
+
+For example, this class definition:
+
+=begin code
+class Foo::Bar does XML::Class {
+    has Str $.string is xml-element = "foo";
+    has Bool $.not-included is xml-skip = True;
+}
+=end code
+
+Will emit the following XML:
+
+=begin code
+<Bar>
+    <Thing>foo</Thing>
+</Bar>
+=end code
+
 =end pod
 
 use XML;
