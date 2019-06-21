@@ -790,9 +790,9 @@ then you can use the C<xml-skip> trait to do so.
 For example, this class definition:
 
 =begin code
-class Foo::Bar does XML::Class {
-    has Str $.string is xml-element = "foo";
-    has Bool $.not-included is xml-skip = True;
+class Foo::Bar does XML::Class { 
+    has Str $.baz is xml-element = 'foo'; 
+    has Str $.not-included is xml-skip = 'This should not be seen'; 
 }
 =end code
 
@@ -800,7 +800,7 @@ Will emit the following XML:
 
 =begin code
 <Bar>
-    <Thing>foo</Thing>
+    <baz>foo</baz>
 </Bar>
 =end code
 
