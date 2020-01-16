@@ -1,16 +1,17 @@
 {
   "name": "XML::Class",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "auth": "github:jonathanstowe",
   "api": "1.0",
-  "description": "Role to Serialize/De-Serialize a Perl 6 class to/from XML",
-  "source-url": "git://github.com/jonathanstowe/XML-Class.git",
+  "description": "Role to Serialize/De-Serialize a Raku class to/from XML",
+  "source-url": "https://github.com/jonathanstowe/XML-Class.git",
   "support": {
     "email": "jns+gh@gellyfish.co.uk",
-    "source": "git://github.com/jonathanstowe/XML-Class.git",
+    "source": "https://github.com/jonathanstowe/XML-Class.git",
     "bugtracker": "https://github.com/jonathanstowe/XML-Class/issues"
   },
   "perl": "6.*",
+  "raku": "6.*",
   "resources": [ ],
   "build-depends": [ ],
   "depends": [
@@ -32,5 +33,5 @@
   "authors": [
     "Jonathan Stowe <jns+gh@gellyfish.com.uk>"
   ],
-  "meta-version": "0"
+  "meta-version": "1"
 }

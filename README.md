@@ -1,6 +1,6 @@
 # XML::Class
 
-Role to Serialize/De-Serialize a Perl 6 class to/from XML
+Role to Serialize/De-Serialize a Raku class to/from XML
 
 [![Build Status](https://travis-ci.org/jonathanstowe/XML-Class.svg?branch=master)](https://travis-ci.org/jonathanstowe/XML-Class)
 
@@ -25,8 +25,8 @@ say $f.to-xml; # <?xml version="1.0"?><foo xmlns="http://example.com/" version="
 
 ## Description
 
-This provides a relatively easy way to instantiate a Perl 6 object from
-XML and create XML that describes the Perl 6 class in a consistent manner.
+This provides a relatively easy way to instantiate a Raku object from
+XML and create XML that describes the Raku class in a consistent manner.
 
 It is somewhat inspired by the XmlSerialization class of the .Net
 framework, but there are other antecedents.
@@ -36,7 +36,7 @@ and XML that represents it means that XML can be consistently parsed
 and generated in a way that should always remain valid to the original
 description.
 
-This module aims to map between Perl 6 object attributes and XML by
+This module aims to map between Raku object attributes and XML by
 providing some default behaviours and some attribute traits to alter
 that behaviour to model the XML.
 
@@ -47,7 +47,7 @@ as elements with simple content.  Positional attributes will always
 be serialised as a sequence of elements (with an optional container
 specified by a trait,) likewise associative attributes (though the use
 of these is discouraged as there is no constraint on the names of the
-elements which are taken from the keys of the Hash.)  Perl 6 classes are
+elements which are taken from the keys of the Hash.)  Raku classes are
 expressed as XML complex types with the same serialisation as above.
 Provision is also made for the serialisation and de-serialisation of
 other than the builtin types to simple contemt (trivial examples might
@@ -65,7 +65,7 @@ The full documentation is available as POD or as
 
 ## Installation
 
-Assuming you have a working Rakudo Perl 6 installation you should be able to
+Assuming you have a working Rakudo installation you should be able to
 install this with *zef* :
 
     # From the source directory
@@ -93,4 +93,4 @@ This is free software.
 
 Please see the [LICENCE](LICENCE) file in the distribution
 
-© Jonathan Stowe 2016 - 2019
+© Jonathan Stowe 2016 - 2020

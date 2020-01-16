@@ -4,7 +4,7 @@ use v6;
 
 =head1 NAME
 
-XML::Class - Role to Serialize/De-Serialize a Perl 6 class to/from XML
+XML::Class - Role to Serialize/De-Serialize a Raku class to/from XML
 
 =head1 SYNOPSIS
 
@@ -28,8 +28,8 @@ There are more examples in the L<USAGE|#USAGE> section below.
 
 =head1 DESCRIPTION
 
-This provides a relatively easy way to instantiate a Perl 6 object from
-XML and create XML that describes the Perl 6 class in a consistent manner.
+This provides a relatively easy way to instantiate a Raku object from
+XML and create XML that describes the Raku class in a consistent manner.
 
 It is somewhat inspired by the C<XmlSerialization> class of the .Net
 framework, but there are other antecedents.
@@ -39,7 +39,7 @@ and XML that represents it means that XML can be consistently parsed
 and generated in a way that should always remain valid to the original
 description.
 
-This module aims to map between Perl 6 object attributes and XML by
+This module aims to map between Raku object attributes and XML by
 providing some default behaviours and some attribute traits to alter
 that behaviour to model the XML.
 
@@ -50,7 +50,7 @@ as elements with simple content.  positional attributes will always
 be serialised as a sequence of elements (with an optional container
 specified by a trait,) likewise associative attributes (though the use
 of these is discouraged as there is no constraint on the names of the
-elements which are taken from the keys of the Hash.)  Perl 6 classes are
+elements which are taken from the keys of the Hash.)  Raku classes are
 expressed as XML complex types with the same serialisation as above.
 Provision is also made for the serialisation and de-serialisation of
 other than the builtin types to simple contemt (trivial examples might
@@ -176,7 +176,7 @@ Only object attributes with a public accessor will be serialised to XML.
 
 By default a scalar attribute (that is with a C<$.> sigil) of a "simple
 type" (that is strings, real numbers, bool, datetime and date) will be
-serialised as XML attributes with the same name as the Perl 6 attribute:
+serialised as XML attributes with the same name as the Raku attribute:
 
 =begin code
 
@@ -742,7 +742,7 @@ can be expressed as a string that contains sufficient information to
 recreate an object of the equivalent value,) then you can provide your
 own code with the C<xml-serialise> and C<xml-deserialise> traits to turn
 the object into a string and convert it back into an object of the same
-type respectively.  A Perl 6 L<Version> object is a good example:
+type respectively.  A Raku L<Version> object is a good example:
 
 =begin code
 class Versioned does XML::Class {
@@ -780,19 +780,19 @@ applications this should be fine, however if a peer application
 requires a value to be defined or has some constraint if the element
 or attribute is present then the C<xml-skip-null> trait can be applied
 which will cause the element or attribute to not be emitted at all
-if the Perl 6 attribute is not a defined value.
+if the Raku attribute is not a defined value.
 
-=head2 OMITTING ATTRIBUTES 
+=head2 OMITTING ATTRIBUTES
 
-If you would like to omit an attribute from XML serialization/deserialization, 
-then you can use the C<xml-skip> trait to do so. 
+If you would like to omit an attribute from XML serialization/deserialization,
+then you can use the C<xml-skip> trait to do so.
 
 For example, this class definition:
 
 =begin code
-class Foo::Bar does XML::Class { 
-    has Str $.baz is xml-element = 'foo'; 
-    has Str $.not-included is xml-skip = 'This should not be seen'; 
+class Foo::Bar does XML::Class {
+    has Str $.baz is xml-element = 'foo';
+    has Str $.not-included is xml-skip = 'This should not be seen';
 }
 =end code
 

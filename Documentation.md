@@ -1,7 +1,7 @@
 NAME
 ====
 
-XML::Class - Role to Serialize/De-Serialize a Perl 6 class to/from XML
+XML::Class - Role to Serialize/De-Serialize a Raku class to/from XML
 
 SYNOPSIS
 ========
@@ -22,15 +22,15 @@ There are more examples in the [USAGE](#USAGE) section below.
 DESCRIPTION
 ===========
 
-This provides a relatively easy way to instantiate a Perl 6 object from XML and create XML that describes the Perl 6 class in a consistent manner.
+This provides a relatively easy way to instantiate a Raku object from XML and create XML that describes the Raku class in a consistent manner.
 
 It is somewhat inspired by the `XmlSerialization` class of the .Net framework, but there are other antecedents.
 
 Using a relatively static definition of the relation between a class and XML that represents it means that XML can be consistently parsed and generated in a way that should always remain valid to the original description.
 
-This module aims to map between Perl 6 object attributes and XML by providing some default behaviours and some attribute traits to alter that behaviour to model the XML.
+This module aims to map between Raku object attributes and XML by providing some default behaviours and some attribute traits to alter that behaviour to model the XML.
 
-By default scalar attributes who's value type can be expressed as an XML simple type (e.g. strings, real numbers, boolean, datetimes) will be serialised as attribute values or (with an `xml-element` trait,) as elements with simple content. positional attributes will always be serialised as a sequence of elements (with an optional container specified by a trait,) likewise associative attributes (though the use of these is discouraged as there is no constraint on the names of the elements which are taken from the keys of the Hash.) Perl 6 classes are expressed as XML complex types with the same serialisation as above. Provision is also made for the serialisation and de-serialisation of other than the builtin types to simple contemt (trivial examples might be Version objects for instance,) and for the handling of data that might be unknown at definition time (such as the xsd:Any in SOAP head and body elements,) by the use of "namespace maps".
+By default scalar attributes who's value type can be expressed as an XML simple type (e.g. strings, real numbers, boolean, datetimes) will be serialised as attribute values or (with an `xml-element` trait,) as elements with simple content. positional attributes will always be serialised as a sequence of elements (with an optional container specified by a trait,) likewise associative attributes (though the use of these is discouraged as there is no constraint on the names of the elements which are taken from the keys of the Hash.) Raku classes are expressed as XML complex types with the same serialisation as above. Provision is also made for the serialisation and de-serialisation of other than the builtin types to simple contemt (trivial examples might be Version objects for instance,) and for the handling of data that might be unknown at definition time (such as the xsd:Any in SOAP head and body elements,) by the use of "namespace maps".
 
 There are things that explicitly aren't catered for such as "mixed content" (that is where XML markup may be within text content as in XHTML for example,) but that shouldn't be a problem for data storage or messaging applications for the most part.
 
@@ -114,7 +114,7 @@ SCALAR ATTRIBUTES
 
 Only object attributes with a public accessor will be serialised to XML.
 
-By default a scalar attribute (that is with a `$.` sigil) of a "simple type" (that is strings, real numbers, bool, datetime and date) will be serialised as XML attributes with the same name as the Perl 6 attribute:
+By default a scalar attribute (that is with a `$.` sigil) of a "simple type" (that is strings, real numbers, bool, datetime and date) will be serialised as XML attributes with the same name as the Raku attribute:
 
     class Foo::Bar does XML::Class {
         has Str $.string = "foo";
@@ -485,7 +485,7 @@ If no matching namespace is found in the `%*NS-MAP` for that found to be in effe
 OTHER TYPES AS SIMPLE CONTENT
 -----------------------------
 
-If your application has data types that aren't the builtin types but are nonetheless able to be expressed as "simple content" (that is they can be expressed as a string that contains sufficient information to recreate an object of the equivalent value,) then you can provide your own code with the `xml-serialise` and `xml-deserialise` traits to turn the object into a string and convert it back into an object of the same type respectively. A Perl 6 [Version](Version) object is a good example:
+If your application has data types that aren't the builtin types but are nonetheless able to be expressed as "simple content" (that is they can be expressed as a string that contains sufficient information to recreate an object of the equivalent value,) then you can provide your own code with the `xml-serialise` and `xml-deserialise` traits to turn the object into a string and convert it back into an object of the same type respectively. A Raku [Version](Version) object is a good example:
 
     class Versioned does XML::Class {
         sub version-out(Version $v) returns Str {
@@ -510,5 +510,23 @@ The only constraint on the code supplied for the traits is that for the serialis
 OMITTING EMPTY VALUES
 ---------------------
 
-By default an uninitialised attribute will give rise to an XML attribute with the empty string as a value or an empty XML element, for many applications this should be fine, however if a peer application requires a value to be defined or has some constraint if the element or attribute is present then the `xml-skip-null` trait can be applied which will cause the element or attribute to not be emitted at all if the Perl 6 attribute is not a defined value.
+By default an uninitialised attribute will give rise to an XML attribute with the empty string as a value or an empty XML element, for many applications this should be fine, however if a peer application requires a value to be defined or has some constraint if the element or attribute is present then the `xml-skip-null` trait can be applied which will cause the element or attribute to not be emitted at all if the Raku attribute is not a defined value.
+
+OMITTING ATTRIBUTES
+-------------------
+
+If you would like to omit an attribute from XML serialization/deserialization, then you can use the `xml-skip` trait to do so.
+
+For example, this class definition:
+
+    class Foo::Bar does XML::Class {
+        has Str $.baz is xml-element = 'foo';
+        has Str $.not-included is xml-skip = 'This should not be seen';
+    }
+
+Will emit the following XML:
+
+    <Bar>
+        <baz>foo</baz>
+    </Bar>
 
