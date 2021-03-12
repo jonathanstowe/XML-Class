@@ -1,4 +1,4 @@
-#!perl6
+#!raku
 
 use v6;
 
@@ -229,4 +229,4 @@ nok $out.nodes[0].elements(TAG => 'Any'), "and we didn't get some bogus element"
 is  $out.nodes[0].elements.elems, 0, "and infact there are no elements there at all";
 
 done-testing;
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

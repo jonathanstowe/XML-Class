@@ -1,4 +1,4 @@
-#!perl6
+#!raku
 
 use v6;
 
@@ -154,4 +154,4 @@ is $out.bar[0].thing, $obj.bar[0].thing, "and its right attribute in it";
 is $out.bar[1].thing, $obj.bar[1].thing, "and its right attribute in it";
 
 done-testing;
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

@@ -5,4 +5,4 @@ class Region does XML::Class is export {
   has Str $.regionEndpoint is xml-element;
 }
 
-# vim: ft=perl6
+# vim: ft=raku

@@ -1,4 +1,4 @@
-#!perl6
+#!raku
 
 use v6;
 
@@ -132,4 +132,4 @@ isa-ok $out.bee[1], E::B, "and the XML::Class attribute (second element) is the 
 is $out.bee[1].string, $obj.bee[1].string, "the attribute match";
 
 done-testing;
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

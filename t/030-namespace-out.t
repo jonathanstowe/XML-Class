@@ -1,4 +1,4 @@
-#!perl6
+#!raku
 
 use v6;
 
@@ -162,4 +162,4 @@ is $xml.root.nodes[0][0][0].name, 'ba:thing', "and so did its child element";
 diag $xml if $DEBUG;
 
 done-testing;
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

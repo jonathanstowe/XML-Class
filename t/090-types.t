@@ -1,4 +1,4 @@
-#!perl6
+#!raku
 
 use v6;
 
@@ -287,4 +287,4 @@ is $in.attribute, $obj.attribute, "attribute values match";
 is $in.element, $obj.element, "element values match";
 
 done-testing;
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

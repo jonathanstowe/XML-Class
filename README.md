@@ -2,11 +2,12 @@
 
 Role to Serialize/De-Serialize a Raku class to/from XML
 
-[![Build Status](https://travis-ci.org/jonathanstowe/XML-Class.svg?branch=master)](https://travis-ci.org/jonathanstowe/XML-Class)
+![Build Status](https://github.com/jonathanstowe/XML-Class/workflows/CI/badge.svg)
+
 
 ## Synopsis
 
-```perl6
+```raku
 
 use XML::Class;
 
@@ -65,8 +66,7 @@ The full documentation is available as POD or as
 
 ## Installation
 
-Assuming you have a working Rakudo installation you should be able to
-install this with *zef* :
+Assuming you have a working Rakudo installation you should be able to install this with *zef* :
 
     # From the source directory
    
@@ -93,4 +93,4 @@ This is free software.
 
 Please see the [LICENCE](LICENCE) file in the distribution
 
-© Jonathan Stowe 2016 - 2020
+© Jonathan Stowe 2016 - 2021

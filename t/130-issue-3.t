@@ -1,4 +1,4 @@
-#!/usr/bin/env perl6
+#!/usr/bin/env raku
 
 use Test;
 use XML::Class;
@@ -49,4 +49,4 @@ is $isc.to-xml, $expect2,'claas typed scalars with over-ride round trip';
 
 done-testing;
 
-# vim: ft=perl6
+# vim: ft=raku

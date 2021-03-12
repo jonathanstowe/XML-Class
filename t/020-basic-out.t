@@ -1,4 +1,4 @@
-#!perl6
+#!raku
 
 use v6;
 use Test;
@@ -240,4 +240,4 @@ is $xml.Str, '<?xml version="1.0"?><Zuf><Vub><thing>boom</thing></Vub><Vub><thin
 diag $xml if $DEBUG;
 
 done-testing;
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

@@ -1,4 +1,4 @@
-#!perl6
+#!raku
 
 use v6;
 
@@ -36,4 +36,4 @@ ok  $xml.elements(TAG => 'always-inner-object'), "but still have element without
 
 
 done-testing;
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

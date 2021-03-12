@@ -1,4 +1,4 @@
-#!perl6
+#!raku
 
 use v6;
 
@@ -61,4 +61,4 @@ is $in.complex-element, $obj.complex-element, "complex element too";
 is $in.integer-string, $obj.integer-string, "integer element";
 
 done-testing;
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku

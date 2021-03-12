@@ -1,4 +1,4 @@
-#!perl6
+#!raku
 
 use v6;
 
@@ -92,4 +92,4 @@ for $in.cities -> $city {
 
 
 done-testing;
-# vim: expandtab shiftwidth=4 ft=perl6
+# vim: expandtab shiftwidth=4 ft=raku
