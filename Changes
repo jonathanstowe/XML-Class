@@ -1,3 +1,5 @@
+v0.0.10	Sun  7 Aug 09:46:19 BST 2022
+	* Upload to zef repository
 v0.0.9		Fri 12 Mar 20:18:13 GMT 2021
 	* Spring cleaning
 	* Switch to GH actions
@@ -18,3 +20,4 @@ v0.0.2		Wed Mar 23 15:21:00 2016 +0000
 	* Allow for custom deserialise/serialise on builtins
 v0.0.1		Sun Feb 28 19:06:51 2016 +0000 
 	* Initial release
+

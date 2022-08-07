@@ -1,37 +1,38 @@
 {
-  "name": "XML::Class",
-  "version": "0.0.9",
-  "auth": "github:jonathanstowe",
-  "api": "1.0",
   "description": "Role to Serialize/De-Serialize a Raku class to/from XML",
-  "source-url": "https://github.com/jonathanstowe/XML-Class.git",
   "support": {
+    "bugtracker": "https://github.com/jonathanstowe/XML-Class/issues",
     "email": "jns+gh@gellyfish.co.uk",
-    "source": "https://github.com/jonathanstowe/XML-Class.git",
-    "bugtracker": "https://github.com/jonathanstowe/XML-Class/issues"
+    "source": "https://github.com/jonathanstowe/XML-Class.git"
   },
-  "perl": "6.*",
-  "raku": "6.*",
-  "resources": [ ],
-  "build-depends": [ ],
   "depends": [
     "XML"
   ],
+  "resources": [
+  ],
+  "version": "0.0.10",
+  "authors": [
+    "Jonathan Stowe <jns+gh@gellyfish.com.uk>"
+  ],
+  "test-depends": [
+    "Test"
+  ],
+  "api": "1.0",
+  "meta-version": "1",
   "tags": [
     "XML",
     "object",
     "role",
     "framework"
   ],
-  "license": "Artistic-2.0",
-  "test-depends": [
-    "Test"
-  ],
   "provides": {
     "XML::Class": "lib/XML/Class.pm"
   },
-  "authors": [
-    "Jonathan Stowe <jns+gh@gellyfish.com.uk>"
+  "raku": "6.*",
+  "build-depends": [
   ],
-  "meta-version": "1"
+  "auth": "zef:jonathanstowe",
+  "name": "XML::Class",
+  "source-url": "https://github.com/jonathanstowe/XML-Class.git",
+  "license": "Artistic-2.0"
 }
