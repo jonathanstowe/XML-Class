@@ -58,11 +58,11 @@
           "purpose": null,
           "children": [
             {
-              "name": "Region.pm",
+              "name": "Region.rakumod",
               "type": "file"
             },
             {
-              "name": "Country.pm",
+              "name": "Country.rakumod",
               "type": "file"
             }
           ],
@@ -116,7 +116,7 @@
           "children": [
             {
               "type": "file",
-              "name": "Class.pm"
+              "name": "Class.rakumod"
             }
           ]
         }
