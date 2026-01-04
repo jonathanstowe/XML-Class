@@ -717,7 +717,7 @@ my %*NS-MAP = ('urn:my-data' => Data );
 
 my $e = Envelope.from-xml($xml);
 
-say $e.body.perl; # Data.new(something => "some data")
+say $e.body.raku; # Data.new(something => "some data")
 =end code
 
 This allows you to create a SOAP client (or indeed server,) quite simply

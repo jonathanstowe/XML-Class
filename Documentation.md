@@ -474,7 +474,7 @@ Then the following code would get you the received Data object (assuming you hav
 
     my $e = Envelope.from-xml($xml);
 
-    say $e.body.perl; # Data.new(something => "some data")
+    say $e.body.raku; # Data.new(something => "some data")
 
 This allows you to create a SOAP client (or indeed server,) quite simply (though in reality the Body and Head elements are actually sequences of potentially multiple elements, the mechanism works equally well for differing elements mapped to differently mapped classes with a positional attribute.)
 
